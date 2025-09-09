@@ -17,24 +17,24 @@
 
 /* Variáveis CSS (Cores, Fontes, etc.) */
 :root {
-  --background: #ffffff;
+  --background: #f3f4f6;
   --foreground: #374151;
   --card: #fefce8;
   --card-foreground: #475569;
-  --popover: #ffffff;
+  --popover: #f3f4f6;
   --popover-foreground: #374151;
   --primary: #059669;
   --primary-foreground: #ffffff;
   --secondary: #10b981;
-  --secondary-foreground: #ffffff;
+  --secondary-foreground: #f3f4f6;
   --muted: #f1f5f9;
   --muted-foreground: #374151;
   --accent: #10b981;
-  --accent-foreground: #ffffff;
+  --accent-foreground: #f3f4f6;
   --destructive: #d97706;
-  --destructive-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #f9fafb;
+  --destructive-foreground: #f3f4f6;
+  --border: #f3f4f6;
+  --input: #f3f4f6;
   --ring: rgba(5, 150, 105, 0.5);
   --chart-1: #059669;
   --chart-2: #10b981;
@@ -47,8 +47,12 @@
   --sidebar-primary: #ffffff;
   --sidebar-primary-foreground: #059669;
   --sidebar-accent: #10b981;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #e5e7eb;
+  --sidebar-accent-foreground: #f3f4f6;
+  --sidebar-border: #f3f4f6;
   --sidebar-ring: rgba(5, 150, 105, 0.5);
+}
+/* efeitp blur carousoel */
+.cloud-gradient-top {
+  background: linear-gradient(rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 40%, transparent 60%, #f3f4f6 100%);
 }
 

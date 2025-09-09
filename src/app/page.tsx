@@ -12,8 +12,9 @@ import { setProducts } from "../lib/features/products/productsSlice"
 import { mockProducts } from "../lib/data/products"
 import { ArrowRight, Truck, Shield, CreditCard, Headphones } from "lucide-react"
 import Link from "next/link"
-import CarrosselMercadoLivre from "../components/imageCarousel/page"
+
 import { imagens } from "../types/imagens"
+import CarrosselMercadoLivre from "../components/imageCarousel/carousel"
 
 
 export default function HomePage() {
@@ -28,7 +29,7 @@ export default function HomePage() {
   const discountedProducts = products.filter((p) => p.originalPrice && p.originalPrice > p.price)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
+    <div className="min-h-screen bg-[#f3f4f6]">
       <Header />
       <CarrosselMercadoLivre imagens={imagens}></CarrosselMercadoLivre>
 
@@ -36,7 +37,7 @@ export default function HomePage() {
 
       <main>
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-emerald-600 to-teal-600 py-20 text-white">
+        {/* <section className="bg-gradient-to-r from-emerald-600 to-teal-600 py-20 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <Badge className="mb-4 bg-white/20 text-white border-white/30">Ofertas Especiais</Badge>
@@ -62,10 +63,10 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Features Section */}
-        <section className="py-16 bg-white">
+        {/* <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="text-center">
@@ -98,7 +99,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Featured Products */}
         <section className="py-16">

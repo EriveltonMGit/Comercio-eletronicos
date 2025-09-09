@@ -30,11 +30,11 @@ export function CartSidebar() {
   return (
     <>
       {/* Overlay */}
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-50 transition-opacity" onClick={handleClose} />}
+      {isOpen && <div className="fixed inset-0 bg-black/80 z-50 transition-opacity " onClick={handleClose} />}
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-md bg-sidebar border-l border-sidebar-border z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed bg-[#f3f4f6] top-0 right-0 h-full w-full max-w-md bg-sidebar border-l border-sidebar-border z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -51,7 +51,7 @@ export function CartSidebar() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto bg-[#f3f4f6]">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                 <ShoppingBag className="w-16 h-16 text-muted-foreground mb-4" />

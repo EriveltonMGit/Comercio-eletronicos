@@ -11,7 +11,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "E-commerce Store",
   description: "Sistema completo de e-commerce com carrinho, favoritos e checkout",
-  generator: "v0.app",
+  generator: "e-comerce",
 }
 
 export default function RootLayout({
