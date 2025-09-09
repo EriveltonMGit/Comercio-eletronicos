@@ -1,7 +1,9 @@
+// src/lib/features/products/productsSlice.ts
+
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
 export interface Product {
-  id: string
+  id: number
   name: string
   price: number
   originalPrice?: number
@@ -11,8 +13,8 @@ export interface Product {
   category: string
   brand: string
   rating: number
-  reviews: number
-  inStock: boolean
+  reviewsCount: number
+  stock: number
   sizes?: string[]
   colors?: string[]
   features?: string[]

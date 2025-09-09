@@ -1,11 +1,15 @@
-"use client"
+// src/components/products/product-grid.tsx
 
-import { ProductCard } from "./product-card"
-import type { Product } from "../../lib/features/products/productsSlice"
+"use client";
+
+import { ProductCard } from "./product-card";
+// Importe as interfaces corretas da sua API de serviço.
+import type { RelatedProduct } from "../../services/cardService";
 
 interface ProductGridProps {
-  products: Product[]
-  title?: string
+  // O tipo continua sendo RelatedProduct[]
+  products: RelatedProduct[];
+  title?: string;
 }
 
 export function ProductGrid({ products, title }: ProductGridProps) {
@@ -14,7 +18,7 @@ export function ProductGrid({ products, title }: ProductGridProps) {
       <div className="text-center py-12">
         <p className="text-muted-foreground text-lg">Nenhum produto encontrado.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -26,5 +30,5 @@ export function ProductGrid({ products, title }: ProductGridProps) {
         ))}
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 // src/services/cardService.ts
 
-export  interface Product {
+export interface Product {
   id: number;
   title: string;
   description: string;
@@ -12,7 +12,6 @@ export  interface Product {
   category: string;
   thumbnail: string;
   images: string[];
-  
 }
 
 interface Seller {
@@ -35,12 +34,16 @@ export interface ProductDetails {
   rating: number;
   reviewsCount: number;
   stock: number;
-  category: string; 
+  category: string;
   seller: Seller;
   specifications: {
     key: string;
     value: string;
   }[];
+  colors?: string[]; // Mantido como opcional
+  sizes?: string[]; // Mantido como opcional
+  features?: string[]; // Mantido como opcional
+  brand: string;
 }
 
 export interface RelatedProduct {
@@ -49,25 +52,26 @@ export interface RelatedProduct {
   image: string;
   price: number;
   discount?: string;
+  brand: string; // Adicionado para resolver o erro
 }
 
 // Função auxiliar para gerar dados fictícios do vendedor
-const generateSellerData = (): Seller => {
+const generateSellerData = (brand: string): Seller => {
   return {
-    name: "Loja Exemplo " + Math.floor(Math.random() * 1000),
-    rating: parseFloat((Math.random() * 3 + 2).toFixed(1)), // Convertendo para número
+    name: brand + " Store",
+    rating: parseFloat((Math.random() * 3 + 2).toFixed(1)),
     sales: Math.floor(Math.random() * 1000),
   };
 };
 
 // Função auxiliar para gerar especificações fictícias
-const generateSpecifications = (product: Product) => {
+const generateSpecifications = (product: Product): { key: string; value: string }[] => {
   return [
     { key: "Marca", value: product.brand },
     { key: "Categoria", value: product.category },
-    { key: "Modelo", value: `MOD-${product.id.toString().padStart(4, '0')}` },
+    { key: "Modelo", value: `MOD-${product.id.toString().padStart(4, "0")}` },
     { key: "Garantia", value: "12 meses" },
-    { key: "SKU", value: `SKU-${product.id.toString().padStart(6, '0')}` },
+    { key: "SKU", value: `SKU-${product.id.toString().padStart(6, "0")}` },
   ];
 };
 
@@ -77,23 +81,24 @@ export const getCardData = async (): Promise<ProductDetails[]> => {
     const data = await response.json();
 
     if (data && data.products) {
-      const firstSixProducts: Product[] = data.products.slice(0, 6);
-      return firstSixProducts.map((product) => ({
+      const allProducts: Product[] = data.products;
+      return allProducts.map((product) => ({
         id: product.id,
-        category: product.category, 
+        category: product.category,
         name: product.title,
+        brand: product.brand,
         image: product.thumbnail || product.images[0] || "/placeholder.svg",
         description: product.description.substring(0, 80) + "...",
         price: product.price,
-        originalPrice: Math.round(product.price * (1 + product.discountPercentage/100)),
+        originalPrice: Math.round(product.price * (1 + product.discountPercentage / 100)),
         discount: `${Math.round(product.discountPercentage)}%`,
         discountPercentage: product.discountPercentage,
-        shipment: Math.random() > 0.5 ? "Frete grátis" : "Frete grátis",
+        shipment: "Frete grátis",
         images: product.images,
         rating: product.rating,
         reviewsCount: Math.floor(Math.random() * 500),
         stock: product.stock,
-        seller: generateSellerData(),
+        seller: generateSellerData(product.brand),
         specifications: generateSpecifications(product),
       }));
     }
@@ -114,18 +119,19 @@ export const getProductById = async (id: string): Promise<ProductDetails | undef
         id: data.id,
         category: data.category,
         name: data.title,
+        brand: data.brand,
         image: data.thumbnail || data.images[0] || "/placeholder.svg",
         description: data.description,
         price: data.price,
-        originalPrice: Math.round(data.price * (1 + data.discountPercentage/100)),
+        originalPrice: Math.round(data.price * (1 + data.discountPercentage / 100)),
         discount: `${Math.round(data.discountPercentage)}`,
         discountPercentage: data.discountPercentage,
-        shipment: Math.random() > 0.5 ? "Frete grátis" : "Frete grátis",
+        shipment: "Frete grátis",
         images: data.images,
         rating: data.rating,
         reviewsCount: Math.floor(Math.random() * 500),
         stock: data.stock,
-        seller: generateSellerData(),
+        seller: generateSellerData(data.brand),
         specifications: generateSpecifications(data),
       };
     }
@@ -136,9 +142,9 @@ export const getProductById = async (id: string): Promise<ProductDetails | undef
   }
 };
 
-export const getRelatedProducts = async (id: string): Promise<RelatedProduct[]> => {
+export const getRelatedProducts = async (category: string): Promise<RelatedProduct[]> => {
   try {
-    const response = await fetch(`https://dummyjson.com/products/category/${id}`);
+    const response = await fetch(`https://dummyjson.com/products/category/${category}`);
     const data = await response.json();
 
     if (data && data.products) {
@@ -148,11 +154,12 @@ export const getRelatedProducts = async (id: string): Promise<RelatedProduct[]> 
         image: product.thumbnail || product.images[0] || "/placeholder.svg",
         price: product.price,
         discount: `${Math.round(product.discountPercentage)}%`,
+        brand: product.brand,
       }));
     }
     return [];
   } catch (error) {
-    console.error(`Error fetching related products for ID ${id}:`, error);
+    console.error(`Error fetching related products for category ${category}:`, error);
     return [];
   }
 };

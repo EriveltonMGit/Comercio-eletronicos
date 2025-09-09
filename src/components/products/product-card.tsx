@@ -1,74 +1,92 @@
-"use client"
+// src/components/products/product-card.tsx
 
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Heart, ShoppingCart, Star } from "lucide-react"
-import { Button } from "../../components/ui/button"
-import { Card, CardContent } from "../../components/ui/card"
-import { Badge } from "../../components/ui/badge"
-import { useAppDispatch, useAppSelector } from "../../lib/hooks"
-import { useToast } from "../../hooks/use-toast"
-import { addToCart } from "../../lib/features/cart/cartSlice"
-import { addToFavorites, removeFromFavorites } from "../../lib/features/favorites/favoritesSlice"
-import type { Product } from "../../lib/features/products/productsSlice"
-import { ConfirmationModal } from "../../components/ui/confirmation-modal"
+"use client";
 
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Heart, ShoppingCart, Star } from "lucide-react";
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { useAppDispatch, useAppSelector } from "../../lib/hooks";
+import { useToast } from "../../hooks/use-toast";
+import { addToCart } from "../../lib/features/cart/cartSlice";
+import { addToFavorites, removeFromFavorites } from "../../lib/features/favorites/favoritesSlice";
+import type { Product } from "../../lib/features/products/productsSlice";
+import type { RelatedProduct } from "../../services/cardService"; // Importe a interface RelatedProduct
+import { ConfirmationModal } from "../../components/ui/confirmation-modal";
+
+// A interface ProductCardProps agora aceita a união dos tipos
 interface ProductCardProps {
-  product: Product
+  product: Product | RelatedProduct;
+}
+
+// Criando um type guard para verificar se o produto tem a propriedade 'originalPrice'
+function hasOriginalPrice(product: Product | RelatedProduct): product is Product {
+  return (product as Product).originalPrice !== undefined;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const [showModal, setShowModal] = useState(false)
-  const [modalType, setModalType] = useState<"cart" | "favorites">("cart")
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"cart" | "favorites">("cart");
 
-  const dispatch = useAppDispatch()
-  const favorites = useAppSelector((state) => state.favorites.items)
-  const { success, error } = useToast()
+  const dispatch = useAppDispatch();
+  const favorites = useAppSelector((state) => state.favorites.items);
+  const { success, error } = useToast();
 
-  const isFavorite = favorites.some((item) => item.id === product.id)
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price
+  const isFavorite = favorites.some((item) => item.id === product.id.toString());
+  
+  // Usando o type guard para checar se a propriedade existe
+  const hasDiscount = hasOriginalPrice(product) && product.originalPrice! > product.price;
+
+  // Verificações para propriedades que podem não existir em 'RelatedProduct'
   const discountPercentage = hasDiscount
     ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
-    : 0
-
+    : 0;
+  
+  const inStock = 'inStock' in product ? product.inStock : true;
+  const reviewsCount = 'reviewsCount' in product ? product.reviewsCount : 0;
+  const brand = 'brand' in product ? product.brand : '';
+  const rating = 'rating' in product ? product.rating : 0;
+  
   const handleAddToCart = () => {
-    if (!product.inStock) {
-      error("Produto indisponível", "Este produto está fora de estoque")
-      return
+    if (!inStock) {
+      error("Produto indisponível", "Este produto está fora de estoque");
+      return;
     }
 
     dispatch(
       addToCart({
-        id: product.id,
+        id: product.id.toString(),
         name: product.name,
         price: product.price,
         image: product.image,
-      }),
-    )
-    success("Produto adicionado!", `${product.name} foi adicionado ao carrinho`)
-    setModalType("cart")
-    setShowModal(true)
-  }
+      })
+    );
+    success("Produto adicionado!", `${product.name} foi adicionado ao carrinho`);
+    setModalType("cart");
+    setShowModal(true);
+  };
 
   const handleToggleFavorite = () => {
     if (isFavorite) {
-      dispatch(removeFromFavorites(product.id))
-      success("Removido dos favoritos", `${product.name} foi removido dos favoritos`)
+      dispatch(removeFromFavorites(product.id.toString()));
+      success("Removido dos favoritos", `${product.name} foi removido dos favoritos`);
     } else {
       dispatch(
         addToFavorites({
-          id: product.id,
+          id: product.id.toString(),
           name: product.name,
           price: product.price,
           image: product.image,
-        }),
-      )
-      success("Adicionado aos favoritos!", `${product.name} foi salvo nos seus favoritos`)
-      setModalType("favorites")
-      setShowModal(true)
+        })
+      );
+      success("Adicionado aos favoritos!", `${product.name} foi salvo nos seus favoritos`);
+      setModalType("favorites");
+      setShowModal(true);
     }
-  }
+  };
 
   return (
     <>
@@ -110,18 +128,20 @@ export function ProductCard({ product }: ProductCardProps) {
               </h3>
             </Link>
 
+            <p className="text-xs text-muted-foreground truncate">{brand}</p>
+
             <div className="flex items-center gap-1 mb-2">
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
                     className={`w-4 h-4 ${
-                      i < Math.floor(product.rating) ? "text-amber-400 fill-current" : "text-slate-300"
+                      i < Math.floor(rating) ? "text-amber-400 fill-current" : "text-slate-300"
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-sm text-slate-500">({product.reviews})</span>
+              <span className="text-sm text-slate-500">({reviewsCount})</span>
             </div>
 
             <div className="flex items-center gap-2 mb-3">
@@ -134,10 +154,10 @@ export function ProductCard({ product }: ProductCardProps) {
             <Button
               onClick={handleAddToCart}
               className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
-              disabled={!product.inStock}
+              disabled={!inStock}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
-              {product.inStock ? "Adicionar ao Carrinho" : "Fora de Estoque"}
+              {inStock ? "Adicionar ao Carrinho" : "Fora de Estoque"}
             </Button>
           </div>
         </CardContent>
@@ -150,5 +170,5 @@ export function ProductCard({ product }: ProductCardProps) {
         productName={product.name}
       />
     </>
-  )
+  );
 }

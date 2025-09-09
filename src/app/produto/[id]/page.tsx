@@ -1,56 +1,72 @@
-"use client"
+// src/app/produto/[id]/page.tsx
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import Image from "next/image"
-import { Header } from "../../../components/layout/header"
-import { CartSidebar } from "../../../components/cart/cart-sidebar"
-import { Button } from "../../../components/ui/button"
-import { Badge } from "../../../components/ui/badge"
-import { Card, CardContent } from "../../../components/ui/card"
-import { Separator } from "../../../components/ui/separator"
-import { useAppDispatch, useAppSelector } from "../../../lib/hooks"
-import { addToCart } from "../../../lib/features/cart/cartSlice"
-import { addToFavorites, removeFromFavorites } from "../../../lib/features/favorites/favoritesSlice"
-import { setProducts } from "../../../lib/features/products/productsSlice"
-import { mockProducts } from "../../../lib/data/products"
-import { ConfirmationModal } from "../../../components/ui/confirmation-modal"
-import { ProductGrid } from "../../../components/products/product-grid"
-import { Heart, ShoppingCart, Star, Truck, Shield, RotateCcw, Minus, Plus } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Image from "next/image";
+
+import { CartSidebar } from "../../../components/cart/cart-sidebar";
+import { Button } from "../../../components/ui/button";
+import { Badge } from "../../../components/ui/badge";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Separator } from "../../../components/ui/separator";
+import { useAppDispatch, useAppSelector } from "../../../lib/hooks";
+import { addToCart } from "../../../lib/features/cart/cartSlice";
+import { addToFavorites, removeFromFavorites } from "../../../lib/features/favorites/favoritesSlice";
+import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
+import { ProductGrid } from "../../../components/products/product-grid";
+import { Heart, ShoppingCart, Star, Truck, Shield, RotateCcw, Minus, Plus } from "lucide-react";
+import Header from "@/src/components/layout/header";
+
+// Importe as funções e tipos da sua API
+import {
+  getProductById,
+  getRelatedProducts,
+  ProductDetails,
+  RelatedProduct,
+} from "@/src/services/cardService";
 
 export default function ProductPage() {
-  const params = useParams()
-  const dispatch = useAppDispatch()
+  const params = useParams();
+  const dispatch = useAppDispatch();
 
-  const [selectedImage, setSelectedImage] = useState(0)
-  const [selectedSize, setSelectedSize] = useState("")
-  const [selectedColor, setSelectedColor] = useState("")
-  const [quantity, setQuantity] = useState(1)
-  const [showModal, setShowModal] = useState(false)
-  const [modalType, setModalType] = useState<"cart" | "favorites">("cart")
+  const [product, setProduct] = useState<ProductDetails | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<RelatedProduct[]>([]);
 
-  const products = useAppSelector((state) => state.products.items)
-  const favorites = useAppSelector((state) => state.favorites.items)
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"cart" | "favorites">("cart");
 
-  const product = products.find((p) => p.id === params.id)
-  const isFavorite = favorites.some((item) => item.id === params.id)
+  const favorites = useAppSelector((state) => state.favorites.items);
+  const isFavorite = favorites.some((item) => item.id.toString() === params.id);
 
   useEffect(() => {
-    if (products.length === 0) {
-      dispatch(setProducts(mockProducts))
-    }
-  }, [dispatch, products.length])
+    const fetchProductData = async () => {
+      const productId = Array.isArray(params.id) ? params.id[0] : params.id;
+      if (productId) {
+        const fetchedProduct = await getProductById(productId);
+        setProduct(fetchedProduct || null);
+        if (fetchedProduct) {
+          if (fetchedProduct.images && fetchedProduct.images.length > 0) {
+            setSelectedImage(0);
+          }
+        }
+      }
+    };
+    fetchProductData();
+  }, [params.id]);
 
   useEffect(() => {
-    if (product) {
-      if (product.colors && product.colors.length > 0) {
-        setSelectedColor(product.colors[0])
+    const fetchRelatedProductsData = async () => {
+      if (product) {
+        const related = await getRelatedProducts(product.category);
+        const filteredRelated = related.filter((p) => p.id.toString() !== product.id.toString());
+        setRelatedProducts(filteredRelated);
       }
-      if (product.sizes && product.sizes.length > 0) {
-        setSelectedSize(product.sizes[0])
-      }
-    }
-  }, [product])
+    };
+    fetchRelatedProductsData();
+  }, [product]);
 
   if (!product) {
     return (
@@ -58,55 +74,52 @@ export default function ProductPage() {
         <Header />
         <CartSidebar />
         <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Produto não encontrado</h1>
-          <p className="text-muted-foreground">O produto que você está procurando não existe.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Carregando...</h1>
+          <p className="text-muted-foreground">Buscando detalhes do produto.</p>
         </div>
       </div>
-    )
+    );
   }
 
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price
+  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   const discountPercentage = hasDiscount
     ? Math.round(((product.originalPrice! - product.price) / product.price) * 100)
-    : 0
-
-  const relatedProducts = products.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4)
+    : 0;
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
       dispatch(
         addToCart({
-          id: product.id,
+          id: product.id.toString(),
           name: product.name,
           price: product.price,
           image: product.image,
-          size: selectedSize,
-          color: selectedColor,
-        }),
-      )
+          // Removendo 'size' e 'color' pois não existem na API
+        })
+      );
     }
-    setModalType("cart")
-    setShowModal(true)
-  }
+    setModalType("cart");
+    setShowModal(true);
+  };
 
   const handleToggleFavorite = () => {
     if (isFavorite) {
-      dispatch(removeFromFavorites(product.id))
+      dispatch(removeFromFavorites(product.id.toString()));
     } else {
       dispatch(
         addToFavorites({
-          id: product.id,
+          id: product.id.toString(),
           name: product.name,
           price: product.price,
           image: product.image,
-        }),
-      )
-      setModalType("favorites")
-      setShowModal(true)
+        })
+      );
+      setModalType("favorites");
+      setShowModal(true);
     }
-  }
+  };
 
-  const images = product.images || [product.image]
+  const images = product.images || [product.image];
 
   return (
     <>
@@ -174,7 +187,7 @@ export default function ProductPage() {
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {product.rating} ({product.reviews} avaliações)
+                  {product.rating} ({product.reviewsCount} avaliações)
                 </span>
               </div>
 
@@ -196,42 +209,10 @@ export default function ProductPage() {
                 </p>
               </div>
 
-              {/* Options */}
-              {product.colors && product.colors.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-foreground mb-3">Cor:</h3>
-                  <div className="flex gap-2">
-                    {product.colors.map((color) => (
-                      <Button
-                        key={color}
-                        variant={selectedColor === color ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedColor(color)}
-                      >
-                        {color}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {product.sizes && product.sizes.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-foreground mb-3">Tamanho:</h3>
-                  <div className="flex gap-2">
-                    {product.sizes.map((size) => (
-                      <Button
-                        key={size}
-                        variant={selectedSize === size ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedSize(size)}
-                      >
-                        {size}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Removendo seções de 'colors' e 'sizes' */}
+              {/* O código da API DummyJSON não retorna essas propriedades,
+              então a renderização condicional se torna inútil e a lógica
+              de estado desnecessária. */}
 
               {/* Quantity */}
               <div>
@@ -252,10 +233,10 @@ export default function ProductPage() {
                 <Button
                   onClick={handleAddToCart}
                   className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  disabled={!product.inStock}
+                  disabled={product.stock <= 0}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {product.inStock ? "Adicionar ao Carrinho" : "Fora de Estoque"}
+                  {product.stock > 0 ? "Adicionar ao Carrinho" : "Fora de Estoque"}
                 </Button>
                 <Button
                   variant="outline"
@@ -271,7 +252,7 @@ export default function ProductPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="w-4 h-4 text-primary" />
-                  <span>Frete grátis</span>
+                  <span>{product.shipment}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Shield className="w-4 h-4 text-primary" />
@@ -296,15 +277,15 @@ export default function ProductPage() {
               </CardContent>
             </Card>
 
-            {product.features && product.features.length > 0 && (
+            {product.specifications && product.specifications.length > 0 && (
               <Card>
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-bold text-foreground mb-4">Características</h2>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Especificações</h2>
                   <ul className="space-y-2">
-                    {product.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2 text-muted-foreground">
-                        <div className="w-2 h-2 bg-primary rounded-full" />
-                        {feature}
+                    {product.specifications.map((spec, index) => (
+                      <li key={index} className="flex gap-2 text-muted-foreground">
+                        <span className="font-semibold text-foreground">{spec.key}:</span>
+                        <span>{spec.value}</span>
                       </li>
                     ))}
                   </ul>
@@ -329,5 +310,5 @@ export default function ProductPage() {
         productName={product.name}
       />
     </>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Header } from "../../components/layout/header"
+
 import { Footer } from "../../components/layout/footer"
 import { CartSidebar } from "../../components/cart/cart-sidebar"
 import { ProductGrid } from "../../components/products/product-grid"
@@ -14,6 +14,7 @@ import { useToast } from "../../hooks/use-toast"
 import { setProducts, setFilters, clearFilters } from "../../lib/features/products/productsSlice"
 import { mockProducts } from "../../lib/data/products"
 import { Filter, X } from "lucide-react"
+import Header from "@/src/components/layout/header"
 
 export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false)

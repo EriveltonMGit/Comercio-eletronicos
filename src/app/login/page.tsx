@@ -1,4 +1,5 @@
-import { Header } from "../../components/layout/header"
+
+import Header from "@/src/components/layout/header"
 import { LoginForm } from "../../components/auth/login-form"
 
 export default function LoginPage() {

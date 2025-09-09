@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { Header } from "../components/layout/header"
+
 import { Footer } from "../components/layout/footer"
 import { CartSidebar } from "../components/cart/cart-sidebar"
 import { ProductGrid } from "../components/products/product-grid"
@@ -15,6 +15,11 @@ import Link from "next/link"
 
 import { imagens } from "../types/imagens"
 import CarrosselMercadoLivre from "../components/imageCarousel/carousel"
+import Header from "../components/layout/header"
+
+
+
+
 
 
 export default function HomePage() {

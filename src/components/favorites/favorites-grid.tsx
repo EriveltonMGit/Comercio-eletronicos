@@ -1,17 +1,29 @@
-"use client"
+// src/components/favorites/favorites-grid.tsx
 
-import { ProductCard } from "../../components/products/product-card"
-import { useAppSelector } from "../../lib/hooks"
-import { mockProducts } from "../../lib/data/products"
-import { Heart, ShoppingBag } from "lucide-react"
-import { Button } from "../../components/ui/button"
-import Link from "next/link"
+"use client";
 
-export function FavoritesGrid() {
-  const favorites = useAppSelector((state) => state.favorites.items)
+import { ProductCard } from "../products/product-card";
+import { useAppSelector } from "../../lib/hooks";
+import { Heart, ShoppingBag } from "lucide-react";
+import { Button } from "../ui/button";
+import Link from "next/link";
+import { FavoriteItem } from "../../lib/features/favorites/favoritesSlice";
 
-  // Get full product data for favorites
-  const favoriteProducts = mockProducts.filter((product) => favorites.some((fav) => fav.id === product.id))
+// 1. Defina a interface para as props do componente
+interface FavoritesGridProps {
+  favorites: FavoriteItem[];
+}
+
+// 2. Receba a prop 'favorites' na assinatura da função
+export function FavoritesGrid({ favorites }: FavoritesGridProps) {
+  // Pega a lista completa de produtos do estado global
+  const allProducts = useAppSelector((state) => state.products.items);
+
+  // Filtra a lista completa de produtos para obter os detalhes dos favoritos
+  // Nota: a comparação do id foi ajustada para string para consistência
+  const favoriteProducts = allProducts.filter((product) =>
+    favorites.some((fav) => fav.id === product.id.toString())
+  );
 
   if (favorites.length === 0) {
     return (
@@ -30,7 +42,7 @@ export function FavoritesGrid() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -41,9 +53,11 @@ export function FavoritesGrid() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {favoriteProducts.map((product) => (
+          // Como 'favoriteProducts' agora contém os dados completos do produto
+          // e o ProductCard aceita esses tipos, o erro é resolvido.
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </div>
-  )
+  );
 }

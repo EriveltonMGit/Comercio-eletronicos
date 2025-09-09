@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import Link from "next/link"
-import { Header } from "../../components/layout/header"
+
 import { CartItem } from "../../components/cart/cart-item"
 import { CartSidebar } from "../../components/cart/cart-sidebar"
 import { Button } from "../../components/ui/button"
@@ -12,7 +11,8 @@ import { useAppSelector, useAppDispatch } from "../../lib/hooks"
 import { clearCart } from "../../lib/features/cart/cartSlice"
 import { setProducts } from "../../lib/features/products/productsSlice"
 import { mockProducts } from "../../lib/data/products"
-import { ShoppingCart, ArrowLeft, Trash2, CreditCard } from "lucide-react"
+import { ShoppingCart, ArrowLeft, Trash2, CreditCard, Link } from "lucide-react"
+import Header from "@/src/components/layout/header"
 
 export default function CartPage() {
   const { items, total } = useAppSelector((state) => state.cart)
