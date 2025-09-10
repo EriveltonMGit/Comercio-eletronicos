@@ -1,8 +1,6 @@
-// services/dailyOffer.ts
+// src/services/dailyOffer.ts
 
-// Importe as interfaces corretas do seu projeto. Ajuste o caminho se necessário.
-// Ex: import { Product } from "@/src/services/cardService";
-import { Product } from "./productsCardCarousel"; // <- verifique se o nome e caminho batem
+import { Product as ApiProduct, ProductDetails } from "@/src/services/cardService";
 
 export interface DailyOfferDetails {
   id: string;
@@ -16,12 +14,13 @@ export interface DailyOfferDetails {
 }
 
 interface DummyCategoryResponse {
-  products: Product[];
+  products: ApiProduct[];
   total?: number;
   skip?: number;
   limit?: number;
 }
 
+// Esta função busca uma única oferta do dia (o primeiro produto da categoria laptops)
 export async function getDailyOfferData(): Promise<DailyOfferDetails | null> {
   try {
     const res = await fetch("https://dummyjson.com/products/category/laptops");
@@ -32,18 +31,14 @@ export async function getDailyOfferData(): Promise<DailyOfferDetails | null> {
 
     const data: DummyCategoryResponse = await res.json();
 
+    // Se não houver produtos, retorne null
     if (!data?.products || data.products.length === 0) return null;
 
     const product = data.products[0];
 
-    // Garantir que discountPercentage esteja definido e seja um número válido entre 0 e 100
-    const discount = typeof product.discountPercentage === "number" && product.discountPercentage > 0
-      ? product.discountPercentage
-      : undefined;
-
-    // Calcula originalPrice somente se houver discount válido
-    const originalPrice = discount
-      ? Math.round(product.price / (1 - discount / 100))
+    // Calcula o preço original com base no desconto
+    const originalPrice = product.discountPercentage 
+      ? Math.round(product.price / (1 - product.discountPercentage / 100))
       : undefined;
 
     const image = product.thumbnail ?? product.images?.[0] ?? "/placeholder.svg";
@@ -53,10 +48,10 @@ export async function getDailyOfferData(): Promise<DailyOfferDetails | null> {
       image,
       title: product.title,
       description: product.description,
-      link: `/produto/${product.id}`, // rota alinhada com seu projeto (src/app/produto/[id]/page.tsx)
+      link: `/produto/${product.id}`, 
       originalPrice,
       currentPrice: product.price,
-      discountPercentage: discount,
+      discountPercentage: product.discountPercentage,
     };
   } catch (error) {
     console.error("Erro ao carregar a oferta do dia (notebook):", error);

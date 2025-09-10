@@ -1,4 +1,3 @@
-// src/app/checkout/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -55,19 +54,49 @@ export default function CheckoutPage() {
     }
   };
 
+  // NOVIDADE: Lógica para salvar o pedido no Local Storage
   const handleFinishOrder = async () => {
     setIsProcessing(true);
     message.loading({ content: "Processando pedido...", key: "processing" });
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      const orderId = `PED${Date.now()}`;
+      const orderId = `ORD-${Date.now()}`;
+      const orderDate = new Date().toLocaleDateString("pt-BR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
+      // Calcule o total final com o frete
+      const finalTotal = total + (shippingMethod?.price || 0);
+
+      // Crie o objeto do pedido completo
+      const newOrder = {
+        id: orderId,
+        date: orderDate,
+        total: finalTotal,
+        status: "processando",
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.image,
+        })),
+        shippingInfo: shippingAddress,
+        shippingMethod: shippingMethod,
+        paymentMethod: paymentMethod,
+      };
+
+      // Salve no Local Storage
+      const savedOrders = JSON.parse(localStorage.getItem("orders") || "[]");
+      localStorage.setItem("orders", JSON.stringify([newOrder, ...savedOrders]));
 
       dispatch(clearCart());
       dispatch(clearCheckout());
 
       message.success({ content: `Pedido #${orderId} criado com sucesso.`, key: "processing", duration: 3 });
-      router.push("/pedido-confirmado");
+      router.push("/pedidos"); // Redireciona para a página de pedidos
     } catch (error) {
       message.error({ content: "Ocorreu um erro. Tente novamente.", key: "processing", duration: 3 });
     } finally {
@@ -106,11 +135,12 @@ export default function CheckoutPage() {
       case 1:
         return <ShippingForm />;
       case 2:
-        return <ShippingMethodSelector />; // Usar o nome correto
+        return <ShippingMethodSelector />;
       case 3:
         return <PaymentForm />;
       case 4:
-        return <OrderReview />;
+        // NOVIDADE: No passo de revisão, o botão de "Finalizar Pedido" chama a função `handleFinishOrder`
+        return <OrderReview onFinishOrder={handleFinishOrder} />;
       default:
         return null;
     }
@@ -136,11 +166,10 @@ export default function CheckoutPage() {
               <React.Fragment key={step.id}>
                 <div className="flex flex-col items-center">
                   <div
-                    className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-colors duration-300 ${
-                      currentStep >= step.id
+                    className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-colors duration-300 ${currentStep >= step.id
                         ? "bg-emerald-600 border-emerald-600 text-white shadow-md"
                         : "border-slate-300 text-slate-500"
-                    }`}
+                      }`}
                   >
                     {currentStep > step.id ? (
                       <CheckCircle className="w-6 h-6" />
@@ -149,9 +178,8 @@ export default function CheckoutPage() {
                     )}
                   </div>
                   <span
-                    className={`mt-2 text-sm font-medium text-center transition-colors duration-300 ${
-                      currentStep >= step.id ? "text-emerald-600" : "text-slate-500"
-                    }`}
+                    className={`mt-2 text-sm font-medium text-center transition-colors duration-300 ${currentStep >= step.id ? "text-emerald-600" : "text-slate-500"
+                      }`}
                   >
                     {step.title}
                   </span>
@@ -175,18 +203,19 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-6">
-              <Button
-                variant="ghost"
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-                className="flex items-center gap-2 text-slate-600 hover:bg-slate-100"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Voltar
-              </Button>
+            {/* NOVIDADE: Os botões de navegação foram movidos para dentro dos componentes de passo */}
+            {currentStep !== steps.length && (
+              <div className="flex justify-between mt-6">
+                <Button
+                  variant="ghost"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1}
+                  className="flex items-center gap-2 text-slate-600 hover:bg-slate-100"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Voltar
+                </Button>
 
-              {currentStep < steps.length ? (
                 <Button
                   onClick={handleNext}
                   disabled={!canProceed()}
@@ -195,17 +224,8 @@ export default function CheckoutPage() {
                   Continuar
                   <ArrowRight className="w-4 h-4" />
                 </Button>
-              ) : (
-                <Button
-                  onClick={handleFinishOrder}
-                  disabled={!canProceed() || isProcessing}
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md"
-                >
-                  {isProcessing ? "Processando..." : "Finalizar Pedido"}
-                  <CheckCircle className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Order Summary */}

@@ -45,12 +45,12 @@ export default function Novidades() {
             <main className="container mx-auto p-4 min-h-[calc(100vh-128px)]">
                 <div className="flex items-center gap-2 mb-6">
                     <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-6 h-6" />
                     </Link>
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                    <h1 className="text-1xl font-bold text-slate-800 flex items-center gap-3">
 
                         Novidades
-                        <img src="/icons/novidades.gif" alt="" className="w-7 h-7 text-yellow-500 fill-yellow-500"
+                        <img src="/icons/novidades.gif" alt="" className="w-10 h-10 "
                         />
                     </h1>
                 </div>

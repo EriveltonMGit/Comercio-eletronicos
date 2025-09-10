@@ -27,7 +27,7 @@ import { useAppSelector, useAppDispatch } from "../../lib/hooks";
 import { toggleCart } from "../../lib/features/cart/cartSlice";
 import { setSearchQuery, setProducts, Product as ProductType } from "../../lib/features/products/productsSlice";
 import { UserMenu } from "./user-menu";
-import { message } from "antd";
+import { message, notification } from "antd";
 import { getAllProductsData, getCategoryCounts } from "../../services/cardService";
 import { translations } from "@/src/lib/translations";
 
@@ -301,10 +301,16 @@ export default function Header() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [allProducts.length, dispatch]);
 
-  const handleCartClick = () => {
+   const handleCartClick = () => {
     dispatch(toggleCart(true));
     if (cartItems.length === 0) {
-      message.info("Carrinho vazio. Adicione produtos ao carrinho para continuar.");
+      // Ajustado para usar notification
+      notification.info({
+        message: "Seu carrinho está vazio",
+        description: "Adicione produtos ao carrinho para continuar.",
+        placement: "topRight",
+        duration: 3,
+      });
     }
   };
 

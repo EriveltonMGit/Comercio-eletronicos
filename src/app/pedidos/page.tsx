@@ -1,4 +1,3 @@
-// src/app/pedidos/page.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -34,41 +33,6 @@ interface Order {
     };
 }
 
-// Dados de pedidos simulados
-const mockOrders: Order[] = [
-    {
-        id: "ORD-12345",
-        date: "10 de Setembro de 2025",
-        total: 4015.88,
-        status: 'enviado',
-        items: [
-            { name: "Apple MacBook Pro 14 Inch Space Grey", quantity: 1, price: 3999.98, image: "/images/product-1.png" },
-            { name: "Entrega Padrão", quantity: 1, price: 15.90, image: "/icons/truck-icon.svg" }
-        ],
-        shippingInfo: {
-            address: "Rua Exemplo, 123",
-            city: "São Paulo",
-            state: "SP",
-            zipCode: "01000-000",
-        }
-    },
-    {
-        id: "ORD-12346",
-        date: "08 de Setembro de 2025",
-        total: 299.99,
-        status: 'entregue',
-        items: [
-            { name: "iPhone 6", quantity: 1, price: 299.99, image: "/images/product-5.png" },
-        ],
-        shippingInfo: {
-            address: "Avenida dos Testes, 456",
-            city: "Rio de Janeiro",
-            state: "RJ",
-            zipCode: "20000-000",
-        }
-    },
-];
-
 export default function OrdersPage() {
     const router = useRouter();
     const [orders, setOrders] = useState<Order[]>([]);
@@ -78,7 +42,15 @@ export default function OrdersPage() {
         const fetchOrders = async () => {
             setIsLoading(true);
             await new Promise(resolve => setTimeout(resolve, 1500));
-            setOrders(mockOrders);
+
+            try {
+                const savedOrders = JSON.parse(localStorage.getItem("orders") || "[]");
+                setOrders(savedOrders);
+            } catch (e) {
+                console.error("Failed to load orders from localStorage:", e);
+                setOrders([]);
+            }
+
             setIsLoading(false);
         };
         fetchOrders();
@@ -193,42 +165,43 @@ export default function OrdersPage() {
                                 <CardContent className="p-0 space-y-6">
                                     {/* Tabela de Produtos */}
                                     <div className="border border-slate-200 rounded-xl overflow-hidden mt-4">
-                                        {/* Cabeçalho da Tabela */}
-                                        <div className="hidden md:grid grid-cols-[1fr_4fr_1fr_1fr] bg-slate-100 text-sm font-semibold text-slate-700 py-3 px-4">
+                                        {/* Cabeçalho da Tabela CORRIGIDO */}
+                                        <div className="hidden md:grid grid-cols-[80px_1fr_100px_100px] bg-slate-100 text-sm font-semibold text-slate-700 py-3 px-4">
                                             <span>Produto</span>
                                             <span>Detalhes</span>
-                                            <span>Qtd</span>
+                                            <span className="text-center">Qtd</span>
                                             <span className="text-right">Total</span>
                                         </div>
-                                        {/* Itens do Pedido */}
+                                        {/* Itens do Pedido CORRIGIDO */}
                                         {order.items.map((item, index) => (
-                                            <div key={index} className="grid grid-cols-[80px_1fr] md:grid-cols-[1fr_4fr_1fr_1fr] items-center py-4 px-4 border-t border-slate-200">
+                                            <div key={index} className="grid grid-cols-[80px_1fr] md:grid-cols-[80px_1fr_100px_100px] items-center py-4 px-4 border-t border-slate-200">
+                                                {/* Coluna 1: Imagem */}
                                                 <div className="flex-shrink-0">
                                                     <div className="relative w-16 h-16 rounded-md overflow-hidden bg-slate-100">
-                                                        {/* AQUI: Usando tag <img> nativa para exibir a imagem */}
                                                         <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col md:flex-row flex-1 items-start md:items-center justify-between pl-4 md:pl-0">
-                                                    <div>
-                                                        <h4 className="font-medium text-slate-800 text-sm line-clamp-2">{item.name}</h4>
-                                                        <p className="text-sm text-slate-600 mt-1">
-                                                            Preço unitário: R$ {item.price.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <span className="text-sm text-center text-slate-800 hidden md:block">{item.quantity}</span>
-                                                    <span className="text-sm font-bold text-emerald-600 text-right hidden md:block">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                                    {/* Versão para mobile */}
-                                                    <div className="flex items-center md:hidden text-sm gap-2 mt-2 w-full justify-between">
-                                                        <span className="text-slate-800">Qtd: {item.quantity}</span>
-                                                        <span className="font-bold text-emerald-600">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                                    </div>
+                                                {/* Coluna 2: Detalhes */}
+                                                <div className="flex flex-col flex-1 pl-4 md:pl-0">
+                                                    <h4 className="font-medium text-slate-800 text-sm line-clamp-2">{item.name}</h4>
+                                                    <p className="text-sm text-slate-600 mt-1">
+                                                        Preço unitário: R$ {item.price.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                                {/* Coluna 3: Quantidade */}
+                                                <div className="text-sm text-center text-slate-800 hidden md:block">{item.quantity}</div>
+                                                {/* Coluna 4: Total */}
+                                                <div className="text-sm font-bold text-emerald-600 text-right hidden md:block">R$ {(item.price * item.quantity).toFixed(2)}</div>
+                                                {/* Versão para mobile */}
+                                                <div className="flex items-center md:hidden text-sm gap-2 mt-2 w-full justify-between">
+                                                    <span className="text-slate-800">Qtd: {item.quantity}</span>
+                                                    <span className="font-bold text-emerald-600">R$ {(item.price * item.quantity).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
 
-                                    {/* Simulação de Entrega */}
+                                    {/* ... o restante do seu código aqui ... */}
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2">
                                             {statusInfo.icon}
@@ -244,7 +217,6 @@ export default function OrdersPage() {
                                             {order.shippingInfo.address}, {order.shippingInfo.city}, {order.shippingInfo.state} - {order.shippingInfo.zipCode}
                                         </p>
                                     </div>
-
                                 </CardContent>
                             </Card>
                         );

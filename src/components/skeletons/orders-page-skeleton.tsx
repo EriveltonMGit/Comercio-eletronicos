@@ -7,7 +7,7 @@ import { Separator } from '../ui/separator';
 export function OrdersPageSkeleton() {
     return (
         <div className="min-h-screen bg-slate-50 py-8">
-            <div className="container mx-auto px-4 max-w-5xl animate-pulse">
+            <div className="container mx-auto px-4 w-full animate-pulse">
                 <div className="h-10 bg-slate-200 rounded w-1/4 mb-6" />
 
                 <div className="space-y-8">
