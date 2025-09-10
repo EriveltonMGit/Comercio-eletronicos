@@ -1,21 +1,25 @@
+// src/app/checkout/page.tsx
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { message } from "antd";
+
 import { useAppSelector, useAppDispatch } from "../../lib/hooks";
 import { clearCart } from "../../lib/features/cart/cartSlice";
 import { clearCheckout } from "../../lib/features/checkout/checkoutSlice";
+
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Separator } from "../../components/ui/separator";
+
+// CORREÇÃO: Importar o nome correto do componente
 import { ShippingForm } from "../../components/checkout/shipping-form";
-import { ShippingMethod } from "../../components/checkout/shipping-method";
+import { ShippingMethodSelector } from "../../components/checkout/shipping-method";
 import { PaymentForm } from "../../components/checkout/payment-form";
 import { OrderReview } from "../../components/checkout/order-review";
-import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
-// Removido: import { useToast } from "../../hooks/use-toast";
-// Adicionado: importação do 'message' do Ant Design
-import { message } from "antd";
 
 const steps = [
   { id: 1, title: "Endereço de Entrega", component: "shipping" },
@@ -29,7 +33,6 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
   const dispatch = useAppDispatch();
-  // Removido: const { toast } = useToast();
 
   const { items, total } = useAppSelector((state) => state.cart);
   const { shippingAddress, paymentMethod, shippingMethod } = useAppSelector((state) => state.checkout);
@@ -54,27 +57,18 @@ export default function CheckoutPage() {
 
   const handleFinishOrder = async () => {
     setIsProcessing(true);
+    message.loading({ content: "Processando pedido...", key: "processing" });
 
     try {
-      // Substituído o toast customizado pelo Ant Design message.loading
-      message.loading({ content: "Processando pedido...", key: "processing" });
-
-      // Simular processamento do pedido
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
       const orderId = `PED${Date.now()}`;
 
-      // Limpar carrinho e checkout
       dispatch(clearCart());
       dispatch(clearCheckout());
 
-      // Substituído o toast customizado pelo Ant Design message.success
       message.success({ content: `Pedido #${orderId} criado com sucesso.`, key: "processing", duration: 3 });
-
-      // Redirecionar para confirmação
       router.push("/pedido-confirmado");
     } catch (error) {
-      // Substituído o toast customizado pelo Ant Design message.error
       message.error({ content: "Ocorreu um erro. Tente novamente.", key: "processing", duration: 3 });
     } finally {
       setIsProcessing(false);
@@ -112,7 +106,7 @@ export default function CheckoutPage() {
       case 1:
         return <ShippingForm />;
       case 2:
-        return <ShippingMethod />;
+        return <ShippingMethodSelector />; // Usar o nome correto
       case 3:
         return <PaymentForm />;
       case 4:
@@ -123,45 +117,59 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white py-8">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* Botão para voltar ao início */}
+        <div className="mb-8">
+          <Button variant="ghost" className="text-slate-600 hover:text-slate-800" asChild>
+            <Link href="/" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Voltar para a home
+            </Link>
+          </Button>
+        </div>
+
         {/* Progress Steps */}
-        <div className="mb-8 ">
-          <div className="flex items-center justify-between ">
+        <div className="mb-12">
+          <div className="flex items-center justify-between relative">
             {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step.id
-                      ? "bg-emerald-600 border-emerald-600 text-white"
-                      : "border-gray-300 text-gray-400"
+              <React.Fragment key={step.id}>
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-colors duration-300 ${
+                      currentStep >= step.id
+                        ? "bg-emerald-600 border-emerald-600 text-white shadow-md"
+                        : "border-slate-300 text-slate-500"
                     }`}
-                >
-                  {currentStep > step.id ? (
-                    <CheckCircle className="w-5 h-5" />
-                  ) : (
-                    <span className="text-sm font-medium">{step.id}</span>
-                  )}
+                  >
+                    {currentStep > step.id ? (
+                      <CheckCircle className="w-6 h-6" />
+                    ) : (
+                      <span className="text-base font-semibold">{step.id}</span>
+                    )}
+                  </div>
+                  <span
+                    className={`mt-2 text-sm font-medium text-center transition-colors duration-300 ${
+                      currentStep >= step.id ? "text-emerald-600" : "text-slate-500"
+                    }`}
+                  >
+                    {step.title}
+                  </span>
                 </div>
-                <span
-                  className={`ml-2 text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-400"
-                    }`}
-                >
-                  {step.title}
-                </span>
                 {index < steps.length - 1 && (
-                  <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? "bg-emerald-600" : "bg-gray-300"}`} />
+                  <div className={`flex-1 h-1 mx-2 rounded-full transition-colors duration-300 ${currentStep > step.id ? "bg-emerald-600" : "bg-slate-300"}`} />
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 ">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg border-0">
-              <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-                <CardTitle className="text-xl">{steps[currentStep - 1].title}</CardTitle>
+            <Card className="shadow-xl rounded-2xl border-slate-100">
+              <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 text-white rounded-t-2xl">
+                <CardTitle className="text-xl font-bold">{steps[currentStep - 1].title}</CardTitle>
               </CardHeader>
               <CardContent className="p-6">{renderStepContent()}</CardContent>
             </Card>
@@ -169,10 +177,10 @@ export default function CheckoutPage() {
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-6">
               <Button
-                variant="outline"
+                variant="ghost"
                 onClick={handlePrevious}
                 disabled={currentStep === 1}
-                className="flex items-center gap-2 bg-transparent"
+                className="flex items-center gap-2 text-slate-600 hover:bg-slate-100"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar
@@ -182,7 +190,7 @@ export default function CheckoutPage() {
                 <Button
                   onClick={handleNext}
                   disabled={!canProceed()}
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md"
                 >
                   Continuar
                   <ArrowRight className="w-4 h-4" />
@@ -191,7 +199,7 @@ export default function CheckoutPage() {
                 <Button
                   onClick={handleFinishOrder}
                   disabled={!canProceed() || isProcessing}
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md"
                 >
                   {isProcessing ? "Processando..." : "Finalizar Pedido"}
                   <CheckCircle className="w-4 h-4" />
@@ -202,26 +210,26 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <Card className="shadow-lg border-0 sticky top-4">
-              <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 text-white">
-                <CardTitle className="text-lg">Resumo do Pedido</CardTitle>
+            <Card className="shadow-xl rounded-2xl border-slate-100 sticky top-24">
+              <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 text-white rounded-t-2xl">
+                <CardTitle className="text-lg font-bold">Resumo do Pedido</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
                 <div className="space-y-3">
                   {items.map((item) => (
                     <div
                       key={`${item.id}-${item.color}-${item.size}`}
-                      className="flex justify-between text-sm"
+                      className="flex justify-between text-sm text-slate-600"
                     >
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-gray-500">
+                        <p className="font-medium text-slate-900">{item.name}</p>
+                        <p className="text-slate-500">
                           {item.color && `Cor: ${item.color}`}
                           {item.size && ` • Tamanho: ${item.size}`}
                           {` • Qtd: ${item.quantity}`}
                         </p>
                       </div>
-                      <p className="font-medium text-gray-900">R$ {(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-medium text-slate-900">R$ {(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -231,15 +239,15 @@ export default function CheckoutPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>R$ {total.toFixed(2)}</span>
+                    <span className="font-medium text-slate-800">R$ {total.toFixed(2)}</span>
                   </div>
-                  {shippingMethod?.price && shippingMethod.price > 0 && (
+                  {shippingMethod?.price !== undefined && (
                     <div className="flex justify-between">
                       <span>Frete ({shippingMethod.name}):</span>
-                      <span>R$ {shippingMethod.price.toFixed(2)}</span>
+                      <span className="font-medium text-slate-800">R$ {shippingMethod.price.toFixed(2)}</span>
                     </div>
                   )}
-                  <Separator />
+                  <Separator className="my-2" />
                   <div className="flex justify-between font-bold text-lg text-emerald-600">
                     <span>Total:</span>
                     <span>R$ {(total + (shippingMethod?.price || 0)).toFixed(2)}</span>

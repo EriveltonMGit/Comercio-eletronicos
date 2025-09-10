@@ -1,3 +1,4 @@
+// src/components/checkout/shipping-method.tsx
 "use client"
 
 import { Button } from "../../components/ui/button"
@@ -7,7 +8,7 @@ import { Label } from "../../components/ui/label"
 import { useAppSelector, useAppDispatch } from "../../lib/hooks"
 import { setShippingMethod, setCurrentStep } from "../../lib/features/checkout/checkoutSlice"
 import type { ShippingMethod as ShippingMethodType } from "../../lib/features/checkout/checkoutSlice"
-import { Truck, Clock, Zap } from "lucide-react"
+import { Truck, Clock, Zap, ArrowLeft, ArrowRight } from "lucide-react"
 
 const shippingMethods: ShippingMethodType[] = [
   {
@@ -58,34 +59,32 @@ export function ShippingMethodSelector() {
   const getIcon = (methodId: string) => {
     switch (methodId) {
       case "standard":
-        return <Truck className="w-5 h-5 text-primary" />
+        return <Truck className="w-5 h-5 text-emerald-600" />
       case "express":
-        return <Clock className="w-5 h-5 text-primary" />
+        return <Clock className="w-5 h-5 text-emerald-600" />
       case "same-day":
-        return <Zap className="w-5 h-5 text-primary" />
+        return <Zap className="w-5 h-5 text-emerald-600" />
       default:
-        return <Truck className="w-5 h-5 text-primary" />
+        return <Truck className="w-5 h-5 text-emerald-600" />
     }
   }
 
-  // Free shipping for orders over R$ 199
   const freeShippingEligible = cartTotal >= 199
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Truck className="w-5 h-5" />
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <CardHeader className="p-0 mb-4">
+        <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+          <Truck className="w-5 h-5 text-emerald-600" />
           Método de Entrega
         </CardTitle>
         {freeShippingEligible && (
-          <p className="text-sm text-green-600 font-medium">
+          <p className="text-sm text-emerald-600 font-medium">
             🎉 Você ganhou frete grátis! Escolha a entrega padrão sem custo adicional.
           </p>
         )}
       </CardHeader>
-
-      <CardContent className="space-y-4">
+      <CardContent className="p-0">
         <RadioGroup value={shippingMethod?.id || ""} onValueChange={handleMethodChange} className="space-y-3">
           {shippingMethods.map((method) => {
             const isFree = freeShippingEligible && method.id === "standard"
@@ -94,7 +93,8 @@ export function ShippingMethodSelector() {
             return (
               <div
                 key={method.id}
-                className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className={`flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer ${shippingMethod?.id === method.id ? "bg-emerald-50 border-emerald-400" : "bg-white border-slate-200 hover:bg-slate-50"
+                  }`}
               >
                 <RadioGroupItem value={method.id} id={method.id} />
                 <div className="flex-1">
@@ -102,16 +102,16 @@ export function ShippingMethodSelector() {
                     <div className="flex items-center gap-3">
                       {getIcon(method.id)}
                       <div>
-                        <div className="font-semibold text-foreground">
+                        <div className="font-semibold text-slate-800">
                           {method.name}
-                          {isFree && <span className="ml-2 text-green-600 text-sm">(Grátis)</span>}
+                          {isFree && <span className="ml-2 text-emerald-600 text-sm">(Grátis)</span>}
                         </div>
-                        <div className="text-sm text-muted-foreground">{method.description}</div>
-                        <div className="text-sm text-muted-foreground">{method.estimatedDays}</div>
+                        <div className="text-sm text-slate-500">{method.description}</div>
+                        <div className="text-sm text-slate-500">{method.estimatedDays}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-foreground">
+                      <div className="font-semibold text-slate-800">
                         {isFree ? "Grátis" : `R$ ${displayPrice.toFixed(2)}`}
                       </div>
                     </div>
@@ -121,17 +121,18 @@ export function ShippingMethodSelector() {
             )
           })}
         </RadioGroup>
-
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={handleBack}>
+        <div className="flex justify-between pt-6">
+          <Button variant="ghost" onClick={handleBack} className="text-slate-600 hover:bg-slate-100">
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          <Button onClick={handleContinue} disabled={!shippingMethod}>
+          <Button onClick={handleContinue} disabled={!shippingMethod} className="bg-emerald-600 hover:bg-emerald-700">
             Continuar para Pagamento
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </CardContent>
-    </Card>
+    </div>
   )
 }
 

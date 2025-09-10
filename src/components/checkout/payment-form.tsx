@@ -1,3 +1,4 @@
+// src/components/checkout/payment-form.tsx
 "use client"
 
 import { useState } from "react"
@@ -9,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { useAppSelector, useAppDispatch } from "../../lib/hooks"
 import { setPaymentMethod, setCurrentStep } from "../../lib/features/checkout/checkoutSlice"
-import { CreditCard, Smartphone, FileText, DollarSign } from "lucide-react"
+import { CreditCard, Smartphone, FileText, DollarSign, ArrowLeft, ArrowRight } from "lucide-react"
 
 export function PaymentForm() {
   const dispatch = useAppDispatch()
@@ -32,23 +33,19 @@ export function PaymentForm() {
 
   const validateCardForm = () => {
     const newErrors: Record<string, string> = {}
-
     if (!paymentMethod.cardNumber?.trim()) newErrors.cardNumber = "Número do cartão é obrigatório"
     if (!paymentMethod.cardName?.trim()) newErrors.cardName = "Nome no cartão é obrigatório"
     if (!paymentMethod.expiryDate?.trim()) newErrors.expiryDate = "Data de validade é obrigatória"
     if (!paymentMethod.cvv?.trim()) newErrors.cvv = "CVV é obrigatório"
 
-    // Card number validation (basic)
     if (paymentMethod.cardNumber && paymentMethod.cardNumber.replace(/\s/g, "").length !== 16) {
       newErrors.cardNumber = "Número do cartão deve ter 16 dígitos"
     }
 
-    // Expiry date validation
     if (paymentMethod.expiryDate && !/^\d{2}\/\d{2}$/.test(paymentMethod.expiryDate)) {
       newErrors.expiryDate = "Data deve estar no formato MM/AA"
     }
 
-    // CVV validation
     if (paymentMethod.cvv && !/^\d{3,4}$/.test(paymentMethod.cvv)) {
       newErrors.cvv = "CVV deve ter 3 ou 4 dígitos"
     }
@@ -107,57 +104,68 @@ export function PaymentForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="w-5 h-5" />
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <CardHeader className="p-0 mb-4">
+        <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+          <CreditCard className="w-5 h-5 text-emerald-600" />
           Forma de Pagamento
         </CardTitle>
       </CardHeader>
-
-      <CardContent className="space-y-6">
+      <CardContent className="p-0 space-y-6">
         <RadioGroup
           value={paymentMethod.type}
           onValueChange={handlePaymentTypeChange}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
-          <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+          {/* Card de seleção de Cartão de Crédito */}
+          <div
+            className={`flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer ${paymentMethod.type === "credit" ? "bg-emerald-50 border-emerald-400" : "bg-white border-slate-200 hover:bg-slate-50"
+              }`}
+          >
             <RadioGroupItem value="credit" id="credit" />
             <Label htmlFor="credit" className="flex items-center gap-2 cursor-pointer">
-              <CreditCard className="w-4 h-4 text-primary" />
+              <CreditCard className="w-4 h-4 text-emerald-600" />
               <span>Cartão de Crédito</span>
             </Label>
           </div>
-
-          <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+          {/* Card de seleção de Cartão de Débito */}
+          <div
+            className={`flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer ${paymentMethod.type === "debit" ? "bg-emerald-50 border-emerald-400" : "bg-white border-slate-200 hover:bg-slate-50"
+              }`}
+          >
             <RadioGroupItem value="debit" id="debit" />
             <Label htmlFor="debit" className="flex items-center gap-2 cursor-pointer">
-              <DollarSign className="w-4 h-4 text-primary" />
+              <DollarSign className="w-4 h-4 text-emerald-600" />
               <span>Cartão de Débito</span>
             </Label>
           </div>
-
-          <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+          {/* Card de seleção de PIX */}
+          <div
+            className={`flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer ${paymentMethod.type === "pix" ? "bg-emerald-50 border-emerald-400" : "bg-white border-slate-200 hover:bg-slate-50"
+              }`}
+          >
             <RadioGroupItem value="pix" id="pix" />
             <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer">
-              <Smartphone className="w-4 h-4 text-primary" />
+              <Smartphone className="w-4 h-4 text-emerald-600" />
               <span>PIX</span>
             </Label>
           </div>
-
-          <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+          {/* Card de seleção de Boleto */}
+          <div
+            className={`flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer ${paymentMethod.type === "boleto" ? "bg-emerald-50 border-emerald-400" : "bg-white border-slate-200 hover:bg-slate-50"
+              }`}
+          >
             <RadioGroupItem value="boleto" id="boleto" />
             <Label htmlFor="boleto" className="flex items-center gap-2 cursor-pointer">
-              <FileText className="w-4 h-4 text-primary" />
+              <FileText className="w-4 h-4 text-emerald-600" />
               <span>Boleto Bancário</span>
             </Label>
           </div>
         </RadioGroup>
 
         {(paymentMethod.type === "credit" || paymentMethod.type === "debit") && (
-          <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
-            <h3 className="font-semibold text-foreground">Dados do Cartão</h3>
-
+          <div className="space-y-4 p-6 border rounded-lg bg-slate-50">
+            <h3 className="font-semibold text-slate-800">Dados do Cartão</h3>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="cardNumber">Número do Cartão *</Label>
@@ -165,25 +173,23 @@ export function PaymentForm() {
                   id="cardNumber"
                   value={paymentMethod.cardNumber || ""}
                   onChange={(e) => handleInputChange("cardNumber", formatCardNumber(e.target.value))}
-                  className={errors.cardNumber ? "border-destructive" : ""}
+                  className={`bg-white ${errors.cardNumber ? "border-destructive" : ""}`}
                   placeholder="0000 0000 0000 0000"
                   maxLength={19}
                 />
                 {errors.cardNumber && <p className="text-sm text-destructive">{errors.cardNumber}</p>}
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="cardName">Nome no Cartão *</Label>
                 <Input
                   id="cardName"
                   value={paymentMethod.cardName || ""}
                   onChange={(e) => handleInputChange("cardName", e.target.value.toUpperCase())}
-                  className={errors.cardName ? "border-destructive" : ""}
+                  className={`bg-white ${errors.cardName ? "border-destructive" : ""}`}
                   placeholder="NOME COMO NO CARTÃO"
                 />
                 {errors.cardName && <p className="text-sm text-destructive">{errors.cardName}</p>}
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="expiryDate">Validade *</Label>
@@ -191,27 +197,25 @@ export function PaymentForm() {
                     id="expiryDate"
                     value={paymentMethod.expiryDate || ""}
                     onChange={(e) => handleInputChange("expiryDate", formatExpiryDate(e.target.value))}
-                    className={errors.expiryDate ? "border-destructive" : ""}
+                    className={`bg-white ${errors.expiryDate ? "border-destructive" : ""}`}
                     placeholder="MM/AA"
                     maxLength={5}
                   />
                   {errors.expiryDate && <p className="text-sm text-destructive">{errors.expiryDate}</p>}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="cvv">CVV *</Label>
                   <Input
                     id="cvv"
                     value={paymentMethod.cvv || ""}
                     onChange={(e) => handleInputChange("cvv", e.target.value.replace(/\D/g, ""))}
-                    className={errors.cvv ? "border-destructive" : ""}
+                    className={`bg-white ${errors.cvv ? "border-destructive" : ""}`}
                     placeholder="123"
                     maxLength={4}
                   />
                   {errors.cvv && <p className="text-sm text-destructive">{errors.cvv}</p>}
                 </div>
               </div>
-
               {paymentMethod.type === "credit" && (
                 <div className="space-y-2">
                   <Label htmlFor="installments">Parcelamento</Label>
@@ -219,10 +223,10 @@ export function PaymentForm() {
                     value={paymentMethod.installments?.toString() || "1"}
                     onValueChange={(value) => handleInputChange("installments", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {installmentOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value.toString()}>
                           {option.label}
@@ -235,33 +239,29 @@ export function PaymentForm() {
             </div>
           </div>
         )}
-
-        {paymentMethod.type === "pix" && (
-          <div className="p-4 border rounded-lg bg-muted/20">
-            <h3 className="font-semibold text-foreground mb-2">PIX</h3>
-            <p className="text-sm text-muted-foreground">
-              Após confirmar o pedido, você receberá um código PIX para pagamento. O pagamento deve ser realizado em até
-              30 minutos.
+        {(paymentMethod.type === "pix" || paymentMethod.type === "boleto") && (
+          <div className="p-6 border rounded-lg bg-slate-50">
+            <h3 className="font-semibold text-slate-800 mb-2">
+              {paymentMethod.type === "pix" ? "PIX" : "Boleto Bancário"}
+            </h3>
+            <p className="text-sm text-slate-600">
+              {paymentMethod.type === "pix"
+                ? "Após confirmar o pedido, você receberá um código PIX para pagamento. O pagamento deve ser realizado em até 30 minutos."
+                : "Após confirmar o pedido, você receberá um boleto para pagamento. O prazo de vencimento é de 3 dias úteis."}
             </p>
           </div>
         )}
-
-        {paymentMethod.type === "boleto" && (
-          <div className="p-4 border rounded-lg bg-muted/20">
-            <h3 className="font-semibold text-foreground mb-2">Boleto Bancário</h3>
-            <p className="text-sm text-muted-foreground">
-              Após confirmar o pedido, você receberá um boleto para pagamento. O prazo de vencimento é de 3 dias úteis.
-            </p>
-          </div>
-        )}
-
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={handleBack}>
+        <div className="flex justify-between pt-6">
+          <Button variant="ghost" onClick={handleBack} className="text-slate-600 hover:bg-slate-100">
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          <Button onClick={handleContinue}>Revisar Pedido</Button>
+          <Button onClick={handleContinue} disabled={!paymentMethod.type} className="bg-emerald-600 hover:bg-emerald-700">
+            Revisar Pedido
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </CardContent>
-    </Card>
+    </div>
   )
 }
