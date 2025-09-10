@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-// Importe os ícones necessários
+// Ícones
 import {
   Search,
   ShoppingCart,
@@ -24,32 +24,16 @@ import {
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { useAppSelector, useAppDispatch } from "../../lib/hooks";
-// Removido: import { useToast } from "../../hooks/use-toast";
 import { toggleCart } from "../../lib/features/cart/cartSlice";
-import { setSearchQuery } from "../../lib/features/products/productsSlice";
+import { setSearchQuery, setProducts, Product as ProductType } from "../../lib/features/products/productsSlice";
 import { UserMenu } from "./user-menu";
-import { getSmartphonesData } from "../../services/smartphonesCarousel";
-// Adicionado: Importar os componentes do Ant Design
-import { message } from 'antd';
-
+import { message } from "antd";
+import { getAllProductsData, getCategoryCounts } from "../../services/cardService";
+import { translations } from "@/src/lib/translations";
 
 /* ----------------------
-  Tipagens do MENU
+  Tipagens do MENU (unificadas)
   ---------------------- */
-interface ProductDetails {
-  id: string;
-  name: string;
-  image: string;
-  price: number;
-  originalPrice?: number;
-  discount?: string;
-  shipment?: string;
-  rating: number;
-  reviewsCount: number;
-  seller: {
-    name: string;
-  };
-}
 
 type MegaLink = { label: string; href: string; count?: number };
 type MegaColumn = { title: string; links: MegaLink[] };
@@ -62,16 +46,16 @@ type MenuItem = {
   href?: string;
   megamenu?: boolean;
   columns?: MegaColumn[];
-  featured?: ProductDetails[];
+  featured?: ProductType[];
   brands?: Brand[];
   promo?: Promo;
   submenu?: { label: string; href: string }[];
 };
 
 /* ----------------------
-  MENU (dados de exemplo)
+  MENU (dados base)
   ---------------------- */
-const MENU: MenuItem[] = [
+const BASE_MENU: MenuItem[] = [
   {
     id: "departamentos",
     label: "Departamentos",
@@ -80,45 +64,64 @@ const MENU: MenuItem[] = [
       {
         title: "Eletrônicos",
         links: [
-          { label: "Celulares", href: "/categoria/celulares", count: 124 },
-          { label: "Smartwatches", href: "/categoria/smartwatches", count: 32 },
-          { label: "Fones de Ouvido", href: "/categoria/fones", count: 210 },
-          { label: "Acessórios", href: "/categoria/acessorios", count: 89 },
+          { label: "Smartphones", href: "/produtos?category=smartphones" },
+          { label: "Laptops", href: "/produtos?category=laptops" },
+          { label: "Acessórios para celular", href: "/produtos?category=mobile-accessories" },
+          { label: "Relógios Masculinos", href: "/produtos?category=mens-watches" },
+          { label: "Relógios Femininos", href: "/produtos?category=womens-watches" },
+          { label: "Smartwatches", href: "/produtos?category=smartwatches" },
         ],
       },
       {
         title: "Casa & Cozinha",
         links: [
-          { label: "Eletrodomésticos", href: "/categoria/eletro", count: 58 },
-          { label: "Cozinha", href: "/categoria/cozinha", count: 76 },
-          { label: "Decoração", href: "/categoria/decor", count: 43 },
-          { label: "Organização", href: "/categoria/organizacao", count: 19 },
+          { label: "Decoração", href: "/produtos?category=home-decoration" },
+          { label: "Móveis", href: "/produtos?category=furniture" },
+          { label: "Cozinha", href: "/produtos?category=kitchen-accessories" },
+          { label: "Mercearia", href: "/produtos?category=groceries" },
         ],
       },
       {
         title: "Moda",
         links: [
-          { label: "Masculino", href: "/categoria/masculino", count: 142 },
-          { label: "Feminino", href: "/categoria/feminino", count: 198 },
-          { label: "Acessórios", href: "/categoria/moda-acess", count: 64 },
-          { label: "Calçados", href: "/categoria/calcados", count: 87 },
+          { label: "Camisas Masculinas", href: "/produtos?category=mens-shirts" },
+          { label: "Sapatos Masculinos", href: "/produtos?category=mens-shoes" },
+          { label: "Vestidos Femininos", href: "/produtos?category=womens-dresses" },
+          { label: "Bolsas Femininas", href: "/produtos?category=womens-bags" },
+          { label: "Sapatos Femininos", href: "/produtos?category=womens-shoes" },
+          { label: "Óculos de sol", href: "/produtos?category=sunglasses" },
+        ],
+      },
+      {
+        title: "Beleza",
+        links: [
+          { label: "Beleza", href: "/produtos?category=beauty" },
+          { label: "Cuidados com a pele", href: "/produtos?category=skin-care" },
+          { label: "Perfumes", href: "/produtos?category=fragrances" },
+          { label: "Joias", href: "/produtos?category=womens-jewellery" },
+        ],
+      },
+      {
+        title: "Outros",
+        links: [
+          { label: "Motocicletas", href: "/produtos?category=motorcycle" },
+          { label: "Veículos", href: "/produtos?category=vehicle" },
+          { label: "Acessórios Esportivos", href: "/produtos?category=sports-accessories" },
+          { label: "Suprimentos para Pets", href: "/produtos?category=pet-supplies" },
         ],
       },
     ],
     featured: [],
     brands: [
-      { label: "Apple", href: "/marca/apple" },
-      { label: "Samsung", href: "/marca/samsung" },
-      { label: "LG", href: "/marca/lg" },
-      { label: "Philips", href: "/marca/philips" },
+      { label: "Apple", href: "/produtos?brand=Apple" },
+      { label: "Samsung", href: "/produtos?brand=Samsung" },
+      { label: "Huawei", href: "/produtos?brand=Huawei" },
+      { label: "OPPO", href: "/produtos?brand=Oppo" },
+      { label: "Microsoft", href: "/produtos?brand=Microsoft Surface" },
     ],
     promo: { image: "/images/promo-banner.jpg", href: "/ofertas", title: "Super Ofertas da Semana" },
   },
-  {
-    id: "produtos",
-    label: "Produtos",
-    href: "/produtos",
-  },
+  { id: "produtos", label: "Produtos", href: "/produtos" },
   {
     id: "categorias",
     label: "Categorias",
@@ -140,51 +143,154 @@ const MENU: MenuItem[] = [
       { label: "Garantia & Trocas", href: "/garantia" },
     ],
   },
-  {
-    id: "novidades",
-    label: "Novidades",
-    href: "/novidades",
-  },
+  { id: "novidades", label: "Novidades", href: "/novidades" },
 ];
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   "Eletrônicos": Monitor,
   "Casa & Cozinha": Home,
   "Moda": Shirt,
+  "Beleza": Sparkles,
+  "Outros": Box,
 };
 const mainMenuItemIcons: { [key: string]: React.ElementType } = {
-  "produtos": Box,
-  "categorias": LayoutGrid,
-  "ajuda": HelpCircle,
-  "novidades": Sparkles,
+  produtos: Box,
+  categorias: LayoutGrid,
+  ajuda: HelpCircle,
+  novidades: Sparkles,
 };
+
+/* ----------------------
+  Utilitários
+  ---------------------- */
+
+function computeLocalCategoryCounts(products: ProductType[]) {
+  return products.reduce<Record<string, number>>((acc, p) => {
+    const key = p.category ?? "uncategorized";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function normalizeSlugKey(key?: string) {
+  if (!key) return undefined;
+  return key.trim();
+}
+
+function getNiceLabel(key?: string) {
+  if (!key) return "";
+  const direct = translations[key as keyof typeof translations];
+  if (direct) return direct;
+  const replaced = translations[(key.replace(/-/g, " ") as keyof typeof translations)];
+  if (replaced) return replaced;
+  return key;
+}
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpenIndex, setMobileOpenIndex] = useState<number | null>(null);
-  const [featuredProducts, setFeaturedProducts] = useState<ProductDetails[]>([]);
-  const [isClient, setIsClient] = useState(false);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
+  const allProducts = useAppSelector((state) => state.products.items);
   const cartItems = useAppSelector((state) => state.cart.items);
   const favoritesItems = useAppSelector((state) => state.favorites.items);
   const dispatch = useAppDispatch();
   const router = useRouter();
 
+  const [isClient, setIsClient] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const favoritesItemsCount = favoritesItems.length;
 
-  const headerRef = useRef<HTMLElement | null>(null);
+  // MENU com contagens injetadas
+  const MENU = useMemo(() => {
+    const departmentsItem = BASE_MENU.find(item => item.id === 'departamentos');
+    if (!departmentsItem) return BASE_MENU;
+    const newColumns = departmentsItem.columns?.map(col => ({
+      ...col,
+      links: col.links.map(link => {
+        const parts = (link.href || "").split('category=');
+        const categorySlug = parts.length > 1 ? parts[1] : undefined;
+        return {
+          ...link,
+          count: categorySlug ? (categoryCounts[categorySlug] ?? undefined) : undefined,
+        };
+      }),
+    }));
+    return BASE_MENU.map(item => item.id === 'departamentos' ? { ...item, columns: newColumns } : item);
+  }, [categoryCounts]);
+
+  // departamentos: seleciona produtos destaque priorizando categorias importantes (ex: laptops)
+  const departamentos = useMemo<MenuItem | null>(() => {
+    const depMenu = MENU.find((m) => m.id === "departamentos");
+    if (!depMenu) return null;
+
+    const priorityCategories = ["laptops", "smartphones", "furniture", "beauty", "fragrances"];
+
+    const pickFromCategory = (cat: string, limit = 2) =>
+      allProducts.filter(p => p.category === cat).slice(0, limit);
+
+    const featuredByPriority: ProductType[] = [];
+    for (const cat of priorityCategories) {
+      const picks = pickFromCategory(cat, 2);
+      picks.forEach(p => {
+        if (!featuredByPriority.find(fp => fp.id === p.id)) featuredByPriority.push(p);
+      });
+      if (featuredByPriority.length >= 5) break;
+    }
+
+    const fallback = allProducts.slice(0, 5).filter(p => !featuredByPriority.find(fp => fp.id === p.id));
+
+    const featuredProducts = [...featuredByPriority, ...fallback].slice(0, 5).map(p => ({
+      ...p,
+      seller: { name: (p.brand || "") + " Store" },
+      reviewsCount: (p as any).reviewsCount ?? Math.floor(Math.random() * 500),
+      discount: (p as any).discount ?? `${Math.round(p.discountPercentage ?? 0)}%`,
+      shipment: (p as any).shipment ?? 'Frete grátis',
+      originalPrice: (p as any).originalPrice ?? Math.round(p.price * (1 + (p.discountPercentage ?? 0) / 100)),
+    }));
+
+    return {
+      ...depMenu,
+      featured: featuredProducts,
+    };
+  }, [allProducts, MENU]);
+
+  const destaqueProdutos = departamentos?.featured?.slice(0, 2) || [];
+  const promoProdutos = departamentos?.featured?.slice(2, 5) || [];
 
   useEffect(() => {
     setIsClient(true);
 
-    const fetchFeaturedProducts = async () => {
-      const products = await getSmartphonesData();
-      setFeaturedProducts(products);
+    const fetchInitialData = async () => {
+      try {
+        if (allProducts.length === 0) {
+          const productsFromApi = await getAllProductsData();
+          dispatch(setProducts(productsFromApi));
+        }
+
+        // tenta buscar contagens do serviço; se falhar, calcula localmente
+        try {
+          const counts = await getCategoryCounts();
+          if (counts && Object.keys(counts).length > 0) {
+            setCategoryCounts(counts as Record<string, number>);
+          } else {
+            setCategoryCounts(computeLocalCategoryCounts(allProducts.length ? allProducts : await getAllProductsData()));
+          }
+        } catch (err) {
+          // fallback local
+          setCategoryCounts(computeLocalCategoryCounts(allProducts.length ? allProducts : await getAllProductsData()));
+        }
+      } catch (e) {
+        console.error("Failed to fetch products:", e);
+        message.error("Erro ao carregar produtos. Tente novamente mais tarde.");
+      }
     };
-    fetchFeaturedProducts();
+
+    fetchInitialData();
 
     const handleClickOutside = (e: MouseEvent) => {
       if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
@@ -193,17 +299,11 @@ export default function Header() {
     };
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
-  const departamentos = useMemo<MenuItem | null>(() => MENU.find((m) => m.id === "departamentos") ?? null, []);
-
-  const destaqueProdutos = featuredProducts.slice(0, 2);
-  const promoProdutos = featuredProducts.slice(2, 5);
+  }, [allProducts.length, dispatch]);
 
   const handleCartClick = () => {
-    dispatch(toggleCart());
-    if (cartItemsCount === 0) {
-      // Adicionado: Chamada ao toast do Ant Design
+    dispatch(toggleCart(true));
+    if (cartItems.length === 0) {
       message.info("Carrinho vazio. Adicione produtos ao carrinho para continuar.");
     }
   };
@@ -213,11 +313,9 @@ export default function Header() {
     if (searchInput.trim()) {
       dispatch(setSearchQuery(searchInput.trim()));
       router.push("/produtos");
-      // Adicionado: Chamada ao toast do Ant Design
       message.info(`Buscando produtos: "${searchInput.trim()}"`);
       setIsMenuOpen(false);
     } else {
-      // Adicionado: Chamada ao toast do Ant Design
       message.warning("Digite algo para buscar. Insira um termo de busca válido.");
     }
   };
@@ -230,7 +328,6 @@ export default function Header() {
     <header ref={headerRef} className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
-          {/* Logo + Departments quick */}
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-lg flex items-center justify-center shadow-md">
@@ -241,7 +338,6 @@ export default function Header() {
               </span>
             </Link>
 
-            {/* Desktop Departments quick open */}
             <div className="hidden lg:block">
               <nav className="flex items-center gap-2">
                 <div
@@ -258,13 +354,13 @@ export default function Header() {
                     Departamentos
                     <ChevronDown className="w-4 h-4" />
                   </button>
+
                   <div
                     className={`absolute left-0 top-full w-[980px] bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-150 ${openDropdown === "departamentos" ? "opacity-100 pointer-events-auto" : ""}`}
                   >
-                    <div className="p-6 grid grid-cols-4 gap-6 items-start">
-                      {/* Coluna 1: categorias com ícones */}
+                    <div className="p-6 grid grid-cols-5 gap-6 items-start">
                       <div className="space-y-3">
-                        <h5 className="text-sm font-semibold">Categorias</h5>
+                        <h5 className="text-sm font-semibold">Categorias Principais</h5>
                         <ul className="space-y-2">
                           {(departamentos?.columns ?? []).map((col) => {
                             const IconComponent = categoryIcons[col.title] || Box;
@@ -293,7 +389,6 @@ export default function Header() {
                         </div>
                       </div>
 
-                      {/* Colunas centrais: subcategorias detalhadas */}
                       <div className="col-span-2 grid grid-cols-2 gap-4">
                         {(departamentos?.columns ?? []).map((col) => (
                           <div key={col.title}>
@@ -303,7 +398,7 @@ export default function Header() {
                                 <li key={l.label}>
                                   <Link href={l.href} className="text-sm hover:text-emerald-600 flex justify-between">
                                     <span>{l.label}</span>
-                                    <span className="text-xs text-muted-foreground">{l.count}</span>
+                                    <span className="text-xs text-muted-foreground">{l.count ?? ""}</span>
                                   </Link>
                                 </li>
                               ))}
@@ -312,39 +407,38 @@ export default function Header() {
                         ))}
                       </div>
 
-                      {/* Coluna 4: Destaques + Promo */}
-                      <div className="space-y-4">
-                        {/* Seção Destaques */}
-                        <h5 className="text-sm font-semibold">Destaques</h5>
+                      <div className="space-y-4 col-span-2">
+                        <h5 className="text-sm font-semibold">Destaques e Promoções</h5>
                         <div className="space-y-3">
-                          {destaqueProdutos.map((p) => (
+                          <h6 className="text-xs font-semibold">Destaques</h6>
+                          {destaqueProdutos.map((p: ProductType) => (
                             <Link key={p.id} href={`/produto/${p.id}`} className="flex gap-3 items-center hover:bg-slate-50 p-2 rounded">
                               <div className="w-16 h-12 bg-slate-100 rounded overflow-hidden flex-shrink-0">
-                                <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                                <img src={(p as any).images?.[0] || (p as any).thumbnail || (p as any).image} alt={p.name} className="w-full h-full object-cover" />
                               </div>
                               <div>
                                 <div className="text-sm font-medium">{p.name}</div>
-                                <div className="text-xs text-muted-foreground">R$ {p.price.toFixed(2)}</div>
+                                <div className="text-xs text-muted-foreground">R$ {(p.price ?? 0).toFixed(2)}</div>
                                 <div className="flex items-center gap-1 text-yellow-500 text-xs mt-1">
                                   <Star className="w-3 h-3 fill-current" />
-                                  <span>{p.rating.toFixed(1)}</span>
+                                  <span>{(p.rating ?? 0).toFixed(1)}</span>
                                 </div>
                               </div>
                             </Link>
                           ))}
                         </div>
-                        {/* Seção de Carrossel de Promoção */}
+
                         <div className="mt-4">
-                          <h5 className="text-sm font-semibold">Promoções</h5>
+                          <h6 className="text-xs font-semibold">Promoções</h6>
                           {promoProdutos.length > 0 ? (
                             <div className="mt-2 grid grid-cols-3 gap-2">
-                              {promoProdutos.map((p) => (
+                              {promoProdutos.map((p: ProductType) => (
                                 <Link key={p.id} href={`/produto/${p.id}`} className="flex flex-col items-center p-2 rounded hover:bg-slate-50">
                                   <div className="w-16 h-16 rounded-md overflow-hidden">
-                                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                                    <img src={(p as any).images?.[0] || (p as any).thumbnail || (p as any).image} alt={p.name} className="w-full h-full object-cover" />
                                   </div>
                                   <div className="text-xs font-medium text-center mt-1 truncate w-full">{p.name}</div>
-                                  <div className="text-xs font-bold text-emerald-600">R$ {p.price.toFixed(2)}</div>
+                                  <div className="text-xs font-bold text-emerald-600">R$ {(p.price ?? 0).toFixed(2)}</div>
                                 </Link>
                               ))}
                             </div>
@@ -360,7 +454,6 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Search - Desktop */}
           <div className="hidden md:flex flex-1 max-w-xl mx-4">
             <form onSubmit={handleSearch} className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-4 h-4" />
@@ -375,10 +468,8 @@ export default function Header() {
             </form>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-2">
             <div className="hidden md:flex items-center gap-4">
-              {/* Navigation - Desktop (links with possible dropdowns) */}
               <nav className="hidden md:flex items-center gap-4">
                 {MENU.filter((m) => m.id !== "departamentos").map((item) => {
                   const IconComponent = mainMenuItemIcons[item.id];
@@ -571,21 +662,20 @@ export default function Header() {
                               </ul>
                             )}
 
-                            {/* featured mobile */}
-                            {featuredProducts.length > 0 && (
+                            {destaqueProdutos.length > 0 && (
                               <div className="pt-2">
                                 <h5 className="font-semibold">Destaques</h5>
                                 <div className="grid grid-cols-2 gap-2 mt-2">
-                                  {featuredProducts.slice(0, 2).map((p) => (
+                                  {destaqueProdutos.map((p: ProductType) => (
                                     <Link key={p.id} href={`/produto/${p.id}`} className="flex flex-col text-sm" onClick={() => setIsMenuOpen(false)}>
                                       <div className="w-full h-20 bg-slate-100 rounded overflow-hidden mb-1">
-                                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                                        <img src={(p as any).images?.[0] || (p as any).thumbnail || (p as any).image} alt={p.name} className="w-full h-full object-cover" />
                                       </div>
                                       <div className="font-medium">{p.name}</div>
-                                      <div className="text-xs text-muted-foreground">R$ {p.price.toFixed(2)}</div>
+                                      <div className="text-xs text-muted-foreground">R$ {(p.price ?? 0).toFixed(2)}</div>
                                       <div className="flex items-center gap-1 text-yellow-500 text-xs mt-1">
                                         <Star className="w-3 h-3 fill-current" />
-                                        <span>{p.rating.toFixed(1)}</span>
+                                        <span>{(p.rating ?? 0).toFixed(1)}</span>
                                       </div>
                                     </Link>
                                   ))}
@@ -605,7 +695,6 @@ export default function Header() {
                 );
               })}
 
-              {/* Quick actions in mobile */}
               <div className="mt-2 px-2">
                 <Link href="/favoritos" className="flex items-center gap-2 py-2 px-2" onClick={() => setIsMenuOpen(false)}>
                   <Heart className="w-5 h-5" /> Favoritos ({favoritesItemsCount})
@@ -625,7 +714,6 @@ export default function Header() {
             </nav>
           </div>
         </div>
-        {/* Overlay do menu */}
         {isMenuOpen && <div onClick={() => setIsMenuOpen(false)} className="fixed inset-0 bg-black/50 z-40 md:hidden"></div>}
       </div>
     </header>

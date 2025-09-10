@@ -1,7 +1,6 @@
-// src/app/produtos/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Footer } from "../../components/layout/footer";
 import { CartSidebar } from "../../components/cart/cart-sidebar";
@@ -20,7 +19,6 @@ import { translations } from "@/src/lib/translations";
 import { ProductGridSkeleton } from "@/src/components/ui/skeleton";
 import { Breadcrumbs } from "@/src/components/layout/breadcrumbs";
 
-// Adicionamos um novo tipo para o agrupamento
 interface ProductsByCategory {
   [key: string]: ProductDetails[];
 }
@@ -28,23 +26,23 @@ interface ProductsByCategory {
 export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [productsByCategory, setProductsByCategory] = useState<ProductsByCategory>({});
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const { filteredItems, categories, brands, filters, searchQuery } = useAppSelector((state) => state.products);
+  const allProducts = useAppSelector((state) => state.products.items);
 
   useEffect(() => {
-    const fetchAndSetProducts = async () => {
+    const fetchInitialData = async () => {
       setIsLoading(true);
       try {
-        const productsFromApi = await getAllProductsData();
-        if (productsFromApi.length > 0) {
-          dispatch(setProducts(productsFromApi));
-          const categoryFromUrl = searchParams.get("category");
-          if (categoryFromUrl) {
-            dispatch(setFilters({ category: categoryFromUrl }));
-          }
+        if (allProducts.length === 0) {
+          const allProds = await getAllProductsData();
+          dispatch(setProducts(allProds));
         }
+        
+        // Aplica o filtro da URL após os dados serem carregados.
+        const categoryFromUrl = searchParams.get("category");
+        dispatch(setFilters({ category: categoryFromUrl || "" }));
       } catch (e) {
         console.error("Failed to fetch products:", e);
         message.error("Erro ao carregar produtos. Tente novamente mais tarde.");
@@ -53,24 +51,8 @@ export default function ProductsPage() {
       }
     };
 
-    if (filteredItems.length === 0) {
-      fetchAndSetProducts();
-    } else {
-      setIsLoading(false);
-    }
-  }, [dispatch, filteredItems.length, searchParams]);
-
-  useEffect(() => {
-    const groupedProducts = filteredItems.reduce<ProductsByCategory>((acc, product) => {
-      const category = product.category;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(product as ProductDetails);
-      return acc;
-    }, {});
-    setProductsByCategory(groupedProducts);
-  }, [filteredItems]);
+    fetchInitialData();
+  }, [searchParams, dispatch, allProducts.length]);
 
   const handleFilterChange = (key: string, value: any) => {
     dispatch(setFilters({ [key]: value }));
@@ -81,14 +63,26 @@ export default function ProductsPage() {
     message.success("Filtros limpos.");
   };
 
-  // Construção dinâmica dos itens do breadcrumb
+  const groupedProducts = useMemo(() => {
+    if (filteredItems.length === 0) return {};
+
+    return filteredItems.reduce<ProductsByCategory>((acc, product) => {
+      const category = product.category;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(product as ProductDetails);
+      return acc;
+    }, {});
+  }, [filteredItems]);
+
   const breadcrumbItems = [
     { label: "Produtos", href: "/produtos" }
   ];
   if (filters.category) {
     breadcrumbItems.push({
       label: translations[filters.category] || filters.category,
-      href: `/produtos?category=${filters.category}` // Adicionado o href para o link da categoria
+      href: `/produtos?category=${filters.category}`
     });
   }
 
@@ -96,15 +90,11 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-slate-50">
       <Header />
       <CartSidebar />
-
       <main className="container mx-auto px-4 py-8">
-        {/* Adiciona o breadcrumbs aqui */}
         <div className="mb-6">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
-
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar de filtros aprimorado */}
           <div className="lg:w-64">
             <Card className="sticky top-24 bg-white shadow-lg border-slate-200">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -123,13 +113,13 @@ export default function ProductsPage() {
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-slate-700">Categorias</h3>
                   <Select
-                    value={filters.category || ""}
-                    onValueChange={(value) => handleFilterChange("category", value === "all" ? undefined : value)}
+                    value={filters.category || "all"}
+                    onValueChange={(value) => handleFilterChange("category", value === "all" ? "" : value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">Todas as Categorias</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category} value={category}>
@@ -139,18 +129,17 @@ export default function ProductsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 {/* Marcas */}
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-slate-700">Marcas</h3>
                   <Select
-                    value={filters.brand || ""}
-                    onValueChange={(value) => handleFilterChange("brand", value === "all" ? undefined : value)}
+                    value={filters.brand || "all"}
+                    onValueChange={(value) => handleFilterChange("brand", value === "all" ? "" : value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione uma marca" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">Todas as Marcas</SelectItem>
                       {brands.map((brand) => (
                         <SelectItem key={brand} value={brand}>
@@ -160,7 +149,6 @@ export default function ProductsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 {/* Preço */}
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-slate-700">Preço</h3>
@@ -177,7 +165,6 @@ export default function ProductsPage() {
                     className="w-full"
                   />
                 </div>
-
                 {/* Limpar Filtros */}
                 <div className="pt-4">
                   <Button
@@ -192,13 +179,11 @@ export default function ProductsPage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Seções de Produtos por Categoria */}
           <div className="flex-1">
             {isLoading ? (
               <ProductGridSkeleton />
             ) : (
-              Object.keys(productsByCategory).length > 0 ? (
+              Object.keys(groupedProducts).length > 0 ? (
                 <>
                   <div className="mb-6 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                     <h1 className="text-2xl font-bold text-slate-900 mb-2">
@@ -208,7 +193,7 @@ export default function ProductsPage() {
                       {filteredItems.length} produto{filteredItems.length !== 1 ? "s" : ""} encontrado{filteredItems.length !== 1 ? "s" : ""}
                     </p>
                   </div>
-                  {Object.entries(productsByCategory).map(([category, products]) => (
+                  {Object.entries(groupedProducts).map(([category, products]) => (
                     <section key={category} className="mb-12">
                       <Card className="shadow-lg border-slate-200">
                         <CardHeader>

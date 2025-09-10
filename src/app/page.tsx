@@ -1,7 +1,7 @@
 // src/app/HomePage.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Footer } from "../components/layout/footer";
 import { CartSidebar } from "../components/cart/cart-sidebar";
 import { ProductCard } from "../components/products/product-card";
@@ -30,6 +30,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [productsByCategory, setProductsByCategory] = useState<ProductsByCategory>({});
   const carouselRef = React.useRef<HTMLDivElement>(null);
+  const isMounted = useRef(false);
 
   // Início das alterações de paginação
   const [pages, setPages] = useState<{ [key: string]: number }>({});
@@ -41,34 +42,39 @@ export default function HomePage() {
   // Fim das alterações de paginação
 
   useEffect(() => {
+    isMounted.current = true; // Marca o componente como montado
+
     const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        const productsFromApi = await getAllProductsData();
-        if (productsFromApi.length > 0) {
-          dispatch(setProducts(productsFromApi));
-
-          const groupedProducts = productsFromApi.reduce<ProductsByCategory>((acc, product) => {
-            const category = product.category;
-            if (!acc[category]) {
-              acc[category] = [];
-            }
-            acc[category].push(product);
-            return acc;
-          }, {});
-
-          setProductsByCategory(groupedProducts);
+      // A busca de produtos só deve ocorrer se a lista de produtos na store estiver vazia
+      if (products.length === 0) {
+        setIsLoading(true);
+        try {
+          const productsFromApi = await getAllProductsData();
+          if (isMounted.current) { // Verifica se o componente ainda está montado
+            dispatch(setProducts(productsFromApi));
+          }
+        } catch (error) {
+          console.error("Failed to fetch products:", error);
+        } finally {
+          if (isMounted.current) {
+            setIsLoading(false);
+          }
         }
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
+      } else {
         setIsLoading(false);
       }
     };
 
-    if (products.length === 0) {
-      fetchProducts();
-    } else {
+    fetchProducts();
+
+    return () => {
+      isMounted.current = false; // Desmarca o componente como montado ao desmontar
+    };
+  }, [dispatch, products.length]);
+
+  useEffect(() => {
+    // Só agrupa os produtos se a lista completa já estiver carregada e não estiver vazia
+    if (!isLoading && products.length > 0) {
       const groupedProducts = products.reduce<ProductsByCategory>((acc, product) => {
         const category = product.category;
         if (!acc[category]) {
@@ -77,11 +83,11 @@ export default function HomePage() {
         acc[category].push(product as ProductDetails);
         return acc;
       }, {});
-      setProductsByCategory(groupedProducts);
-      setIsLoading(false);
-    }
-  }, [dispatch, products.length]);
 
+      setProductsByCategory(groupedProducts);
+    }
+  }, [products, isLoading]);
+  
   const handleScroll = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
       const scrollAmount = 300;
@@ -143,22 +149,19 @@ export default function HomePage() {
               {Object.entries(productsByCategory)
                 .filter(([category]) => !electronicCategories.includes(category))
                 .map(([category, products]) => {
-                  // Início da lógica de paginação
                   const currentPage = pages[category] || 1;
                   const totalPages = Math.ceil(products.length / itemsPerPage);
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedProducts = products.slice(startIndex, endIndex);
-                  // Fim da lógica de paginação
 
                   return (
                     <section key={category} className="mb-12">
                       <Card className="bg-white rounded-lg shadow py-8 ">
                         <CardHeader>
-                          <CardTitle className="flex  items-center justify-between text-2xl text-slate-900 mb-4">
+                          <CardTitle className="flex items-center justify-between text-2xl text-slate-900 mb-4">
                             {translations[category] || category}
                             <div className="flex gap-2">
-                              {/* Botões de navegação */}
                               <Button
                                 variant="outline"
                                 size="icon"
@@ -182,8 +185,7 @@ export default function HomePage() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="p-4 ">
-                          {/* Renderiza os produtos paginados */}
-                          <div className="grid grid-cols-1  sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {paginatedProducts.map(product => (
                               <ProductCard key={product.id} product={product} />
                             ))}
