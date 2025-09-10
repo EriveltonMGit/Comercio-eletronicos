@@ -1,3 +1,5 @@
+// src/components/confirmation-modal.tsx
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -12,6 +14,10 @@ import {
 } from "../../components/ui/dialog";
 import { CheckCircle, Heart, ShoppingCart } from "lucide-react";
 
+// Adicione os imports do Redux
+import { useAppDispatch } from "../../lib/hooks";
+import { toggleCart } from "../../lib/features/cart/cartSlice";
+
 interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,6 +27,7 @@ interface ConfirmationModalProps {
 
 export function ConfirmationModal({ isOpen, onClose, type, productName }: ConfirmationModalProps) {
   const router = useRouter();
+  const dispatch = useAppDispatch(); // Inicialize o dispatch
 
   const handleContinueShopping = () => {
     onClose();
@@ -29,8 +36,8 @@ export function ConfirmationModal({ isOpen, onClose, type, productName }: Confir
   const handleGoToDestination = () => {
     onClose();
     if (type === "cart") {
-      // Cart will be opened via Redux state
-      // Você pode adicionar aqui a lógica para abrir o carrinho se ele for um componente modal/sidebar
+      // Use a ação Redux para abrir o carrinho
+      dispatch(toggleCart(true));
     } else {
       router.push("/favoritos");
     }
@@ -47,34 +54,34 @@ export function ConfirmationModal({ isOpen, onClose, type, productName }: Confir
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        // Adiciona classes para o fundo desfocado, cores modernas e sombra
         className="sm:max-w-md bg-white/90 backdrop-blur-md rounded-xl shadow-2xl border border-emerald-100 animate-in fade-in-90 zoom-in-95 data-[state=open]:duration-300 data-[state=closed]:duration-200"
       >
-        <DialogHeader className="text-center">
+        <DialogHeader className="text-center ">
           <div
-            // Gradiente e cor vibrante para o círculo do ícone de sucesso
-            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-md"
+            className="mx-auto mb-4 flex items-center justify-center relative w-20 h-20"
           >
-            <CheckCircle className="h-8 w-8 text-white" /> {/* Ícone branco */}
+            <img src="/icons/sacola.gif" alt="Sacola de compras" className="w-full h-full object-contain" />
+            <div
+              className="absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-white p-0.5 shadow-md"
+            >
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+            </div>
           </div>
           <DialogTitle className="text-2xl font-bold text-slate-800">{title}</DialogTitle>
           <DialogDescription className="text-md text-slate-600 leading-relaxed">
             {description}
           </DialogDescription>
         </DialogHeader>
-
         <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
           <Button
             variant="outline"
             onClick={handleContinueShopping}
-            // Botão "Continuar Comprando" com borda suave e texto vibrante
             className="flex-1 bg-white/80 text-emerald-600 border-emerald-400 hover:bg-emerald-50 hover:border-emerald-500 transition-all duration-300 rounded-lg py-2 h-10"
           >
             Continuar Comprando
           </Button>
           <Button
             onClick={handleGoToDestination}
-            // Botão principal com gradiente colorido e sombra
             className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg py-2 h-10"
           >
             <Icon className="w-4 h-4 mr-2" />
