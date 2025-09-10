@@ -3,11 +3,9 @@
 "use client";
 
 import { ProductCard } from "./product-card";
-// Importe as interfaces corretas da sua API de serviço.
 import type { RelatedProduct } from "../../services/cardService";
 
 interface ProductGridProps {
-  // O tipo continua sendo RelatedProduct[]
   products: RelatedProduct[];
   title?: string;
 }

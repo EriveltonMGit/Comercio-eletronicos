@@ -24,15 +24,18 @@ import {
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { useAppSelector, useAppDispatch } from "../../lib/hooks";
-import { useToast } from "../../hooks/use-toast";
+// Removido: import { useToast } from "../../hooks/use-toast";
 import { toggleCart } from "../../lib/features/cart/cartSlice";
 import { setSearchQuery } from "../../lib/features/products/productsSlice";
 import { UserMenu } from "./user-menu";
 import { getSmartphonesData } from "../../services/smartphonesCarousel";
+// Adicionado: Importar os componentes do Ant Design
+import { message } from 'antd';
+
 
 /* ----------------------
-   Tipagens do MENU
-   ---------------------- */
+  Tipagens do MENU
+  ---------------------- */
 interface ProductDetails {
   id: string;
   name: string;
@@ -66,8 +69,8 @@ type MenuItem = {
 };
 
 /* ----------------------
-   MENU (dados de exemplo)
-   ---------------------- */
+  MENU (dados de exemplo)
+  ---------------------- */
 const MENU: MenuItem[] = [
   {
     id: "departamentos",
@@ -162,13 +165,12 @@ export default function Header() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpenIndex, setMobileOpenIndex] = useState<number | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<ProductDetails[]>([]);
-  const [isClient, setIsClient] = useState(false); // NOVO ESTADO: controla a hidratação
+  const [isClient, setIsClient] = useState(false);
 
   const cartItems = useAppSelector((state) => state.cart.items);
   const favoritesItems = useAppSelector((state) => state.favorites.items);
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { info } = useToast();
 
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const favoritesItemsCount = favoritesItems.length;
@@ -176,7 +178,7 @@ export default function Header() {
   const headerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    setIsClient(true); // NOVO: Define o estado para true apenas no cliente
+    setIsClient(true);
 
     const fetchFeaturedProducts = async () => {
       const products = await getSmartphonesData();
@@ -201,7 +203,8 @@ export default function Header() {
   const handleCartClick = () => {
     dispatch(toggleCart());
     if (cartItemsCount === 0) {
-      info("Carrinho vazio", "Adicione produtos ao carrinho para continuar");
+      // Adicionado: Chamada ao toast do Ant Design
+      message.info("Carrinho vazio. Adicione produtos ao carrinho para continuar.");
     }
   };
 
@@ -210,10 +213,12 @@ export default function Header() {
     if (searchInput.trim()) {
       dispatch(setSearchQuery(searchInput.trim()));
       router.push("/produtos");
-      info("Buscando produtos", `Resultados para: "${searchInput.trim()}"`);
+      // Adicionado: Chamada ao toast do Ant Design
+      message.info(`Buscando produtos: "${searchInput.trim()}"`);
       setIsMenuOpen(false);
     } else {
-      info("Digite algo para buscar", "Insira um termo de busca válido");
+      // Adicionado: Chamada ao toast do Ant Design
+      message.warning("Digite algo para buscar. Insira um termo de busca válido.");
     }
   };
 

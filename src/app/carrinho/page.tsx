@@ -32,7 +32,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen  bg-[#f3f4f6]">
         <Header />
         <CartSidebar />
 

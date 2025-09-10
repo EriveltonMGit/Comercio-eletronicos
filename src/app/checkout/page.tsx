@@ -1,92 +1,85 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAppSelector, useAppDispatch } from "../../lib/hooks"
-import { clearCart } from "../../lib/features/cart/cartSlice"
-import { clearCheckout } from "../../lib/features/checkout/checkoutSlice"
-import { Button } from "../../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { Separator } from "../../components/ui/separator"
-import { ShippingForm } from "../../components/checkout/shipping-form"
-import { ShippingMethod } from "../../components/checkout/shipping-method"
-import { PaymentForm } from "../../components/checkout/payment-form"
-import { OrderReview } from "../../components/checkout/order-review"
-import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react"
-import { useToast } from "../../hooks/use-toast"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppSelector, useAppDispatch } from "../../lib/hooks";
+import { clearCart } from "../../lib/features/cart/cartSlice";
+import { clearCheckout } from "../../lib/features/checkout/checkoutSlice";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Separator } from "../../components/ui/separator";
+import { ShippingForm } from "../../components/checkout/shipping-form";
+import { ShippingMethod } from "../../components/checkout/shipping-method";
+import { PaymentForm } from "../../components/checkout/payment-form";
+import { OrderReview } from "../../components/checkout/order-review";
+import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+// Removido: import { useToast } from "../../hooks/use-toast";
+// Adicionado: importação do 'message' do Ant Design
+import { message } from "antd";
 
 const steps = [
   { id: 1, title: "Endereço de Entrega", component: "shipping" },
   { id: 2, title: "Método de Entrega", component: "method" },
   { id: 3, title: "Pagamento", component: "payment" },
   { id: 4, title: "Revisão", component: "review" },
-]
+];
 
 export default function CheckoutPage() {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const router = useRouter()
-  const dispatch = useAppDispatch()
-  const { toast } = useToast()
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  // Removido: const { toast } = useToast();
 
-  const { items, total } = useAppSelector((state) => state.cart)
-  const { shippingAddress, paymentMethod, shippingMethod } = useAppSelector((state) => state.checkout)
-  const { user } = useAppSelector((state) => state.auth)
+  const { items, total } = useAppSelector((state) => state.cart);
+  const { shippingAddress, paymentMethod, shippingMethod } = useAppSelector((state) => state.checkout);
+  const { user } = useAppSelector((state) => state.auth);
 
   if (items.length === 0) {
-    router.push("/")
-    return null
+    router.push("/");
+    return null;
   }
 
   const handleNext = () => {
     if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1)
+      setCurrentStep(currentStep + 1);
     }
-  }
+  };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(currentStep - 1);
     }
-  }
+  };
 
   const handleFinishOrder = async () => {
-    setIsProcessing(true)
+    setIsProcessing(true);
 
     try {
-      toast({
-        title: "Processando pedido...",
-        description: "Aguarde enquanto processamos seu pagamento.",
-        type: "info",
-      });
+      // Substituído o toast customizado pelo Ant Design message.loading
+      message.loading({ content: "Processando pedido...", key: "processing" });
 
       // Simular processamento do pedido
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const orderId = `PED${Date.now()}`
+      const orderId = `PED${Date.now()}`;
 
       // Limpar carrinho e checkout
-      dispatch(clearCart())
-      dispatch(clearCheckout())
+      dispatch(clearCart());
+      dispatch(clearCheckout());
 
-      toast({
-        title: "Pedido finalizado!",
-        description: `Pedido #${orderId} criado com sucesso.`,
-        type: "success", // Use 'type' com o valor 'success'
-      });
+      // Substituído o toast customizado pelo Ant Design message.success
+      message.success({ content: `Pedido #${orderId} criado com sucesso.`, key: "processing", duration: 3 });
 
       // Redirecionar para confirmação
-      router.push("/pedido-confirmado")
+      router.push("/pedido-confirmado");
     } catch (error) {
-      toast({
-        title: "Erro ao processar pedido",
-        description: "Ocorreu um erro. Tente novamente.",
-        type: "error", // Use 'type' com o valor 'error'
-      });
+      // Substituído o toast customizado pelo Ant Design message.error
+      message.error({ content: "Ocorreu um erro. Tente novamente.", key: "processing", duration: 3 });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   const canProceed = () => {
     switch (currentStep) {
@@ -98,36 +91,36 @@ export default function CheckoutPage() {
           shippingAddress.address &&
           shippingAddress.city &&
           shippingAddress.zipCode
-        )
+        );
       case 2:
-        return !!shippingMethod
+        return !!shippingMethod;
       case 3:
         return (
           paymentMethod.type === "pix" ||
           paymentMethod.type === "boleto" ||
           (paymentMethod.cardNumber && paymentMethod.expiryDate && paymentMethod.cvv && paymentMethod.cardName)
-        )
+        );
       case 4:
-        return true
+        return true;
       default:
-        return false
+        return false;
     }
-  }
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <ShippingForm />
+        return <ShippingForm />;
       case 2:
-        return <ShippingMethod />
+        return <ShippingMethod />;
       case 3:
-        return <PaymentForm />
+        return <PaymentForm />;
       case 4:
-        return <OrderReview />
+        return <OrderReview />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-8">
@@ -217,14 +210,12 @@ export default function CheckoutPage() {
                 <div className="space-y-3">
                   {items.map((item) => (
                     <div
-                      // Corrigido: usando as propriedades 'color' e 'size'
                       key={`${item.id}-${item.color}-${item.size}`}
                       className="flex justify-between text-sm"
                     >
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{item.name}</p>
                         <p className="text-gray-500">
-                          {/* Corrigido: usando as propriedades 'color' e 'size' */}
                           {item.color && `Cor: ${item.color}`}
                           {item.size && ` • Tamanho: ${item.size}`}
                           {` • Qtd: ${item.quantity}`}
@@ -260,5 +251,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

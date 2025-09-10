@@ -1,12 +1,13 @@
+// src/app/layout.tsx
 import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { ReduxProvider } from "../components/providers/redux-provider"
-import { ToastProvider } from "../components/ui/toast"
 import { Suspense } from "react"
 import "./globals.css"
+import { AntdStyleProvider } from "../components/providers/antd-style-provider"
 
 export const metadata: Metadata = {
   title: "E-commerce Store",
@@ -24,8 +25,10 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Suspense fallback={null}>
           <ReduxProvider>
-            {children}
-            <ToastProvider />
+            {/* O AntdStyleProvider deve envolver o {children} */}
+            <AntdStyleProvider>
+              {children}
+            </AntdStyleProvider>
           </ReduxProvider>
         </Suspense>
         <Analytics />

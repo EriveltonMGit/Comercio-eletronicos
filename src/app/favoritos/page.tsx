@@ -1,5 +1,3 @@
-// src/app/favoritos/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +6,8 @@ import { setProducts } from "../../lib/features/products/productsSlice";
 import { CartSidebar } from "../../components/cart/cart-sidebar";
 import { FavoritesGrid } from "../../components/favorites/favorites-grid";
 import Header from "@/src/components/layout/header";
-import { getCardData } from "@/src/services/cardService";
+// Alterado a importação para a função correta:
+import { getAllProductsData } from "@/src/services/cardService";
 
 export default function FavoritesPage() {
   const dispatch = useAppDispatch();
@@ -19,20 +18,20 @@ export default function FavoritesPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
-      const productsFromApi = await getCardData();
+      // Alterado para chamar a função correta
+      const productsFromApi = await getAllProductsData();
       if (productsFromApi.length > 0) {
         dispatch(setProducts(productsFromApi));
       }
       setIsLoading(false);
     };
-    
+
     // Verifique se os produtos já estão carregados para evitar buscas desnecessárias
     if (allProducts.length === 0) {
       fetchProducts();
     } else {
       setIsLoading(false);
     }
-
   }, [dispatch, allProducts.length]);
 
   return (

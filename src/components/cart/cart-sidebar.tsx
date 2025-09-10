@@ -1,4 +1,6 @@
+// src/components/cart/cart-sidebar.tsx
 "use client"
+
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "../../components/ui/button"
@@ -6,23 +8,34 @@ import { Badge } from "../../components/ui/badge"
 import { useAppSelector, useAppDispatch } from "../../lib/hooks"
 import { toggleCart, removeFromCart, updateQuantity } from "../../lib/features/cart/cartSlice"
 import { X, Plus, Minus, ShoppingBag, Trash2 } from "lucide-react"
-import type { CartItem as CartItemType } from "../../lib/features/cart/cartSlice" // Add this import if not present
+import type { CartItem as CartItemType } from "../../lib/features/cart/cartSlice"
+
+// Importe o message do Ant Design diretamente
+import { message } from "antd"
 
 export function CartSidebar() {
   const { items, total, isOpen } = useAppSelector((state) => state.cart)
   const dispatch = useAppDispatch()
-
+  
+ 
   const handleClose = () => {
     dispatch(toggleCart())
   }
 
-  // FIX: Change these functions to accept the full item object
   const handleRemoveItem = (item: CartItemType) => {
     dispatch(removeFromCart({ id: item.id, size: item.size, color: item.color }))
+    // Adicionando a notificação de erro usando message.error
+    message.error(`"${item.name}" foi removido do seu carrinho.`);
   }
 
   const handleUpdateQuantity = (item: CartItemType, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveItem(item);
+      return;
+    }
     dispatch(updateQuantity({ id: item.id, size: item.size, color: item.color, quantity: newQuantity }))
+    // Adicionando a notificação de sucesso usando message.success
+    message.success(`A quantidade de "${item.name}" foi alterada para ${newQuantity}.`);
   }
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
@@ -38,7 +51,7 @@ export function CartSidebar() {
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full bg-[#f3f4f6]">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-2">
@@ -98,7 +111,7 @@ export function CartSidebar() {
                             variant="outline"
                             size="icon"
                             className="h-6 w-6 bg-transparent"
-                            onClick={() => handleUpdateQuantity(item, item.quantity - 1)} // FIX: pass the full item
+                            onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
                           >
                             <Minus className="w-3 h-3" />
                           </Button>
@@ -111,7 +124,7 @@ export function CartSidebar() {
                             variant="outline"
                             size="icon"
                             className="h-6 w-6 bg-transparent"
-                            onClick={() => handleUpdateQuantity(item, item.quantity + 1)} // FIX: pass the full item
+                            onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
                           >
                             <Plus className="w-3 h-3" />
                           </Button>
@@ -120,7 +133,7 @@ export function CartSidebar() {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 text-destructive hover:text-destructive"
-                            onClick={() => handleRemoveItem(item)} // FIX: pass the full item
+                            onClick={() => handleRemoveItem(item)}
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
