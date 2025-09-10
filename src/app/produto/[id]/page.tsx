@@ -16,6 +16,7 @@ import { addToFavorites, removeFromFavorites } from "../../../lib/features/favor
 import { ProductGrid } from "../../../components/products/product-grid";
 import { Heart, ShoppingCart, Star, Truck, Shield, RotateCcw, Minus, Plus } from "lucide-react";
 import Header from "@/src/components/layout/header";
+import { Breadcrumbs } from "@/src/components/layout/breadcrumbs";
 
 import {
   getProductById,
@@ -27,8 +28,6 @@ import {
 import { translations } from "@/src/lib/translations";
 import { message } from "antd";
 import { ProductPageSkeleton } from "@/src/components/skeletons/product-page-skeleton";
-
-
 
 export default function ProductPage() {
   const params = useParams();
@@ -125,6 +124,13 @@ export default function ProductPage() {
 
   const images = product.images || [product.image];
 
+  // Construção dinâmica dos itens do breadcrumb
+  const breadcrumbItems = [
+    { label: "Produtos", href: "/produtos" },
+    { label: translations[product.category] || product.category, href: `/produtos?category=${product.category}` },
+    { label: translations[product.name] || product.name },
+  ];
+
   return (
     <>
       <div className="min-h-screen bg-slate-50">
@@ -132,6 +138,11 @@ export default function ProductPage() {
         <CartSidebar />
 
         <main className="container mx-auto px-4 py-8 lg:py-16">
+          {/* Adicione o Breadcrumbs aqui, acima do container principal do produto */}
+          <div className="mb-6">
+            <Breadcrumbs items={breadcrumbItems} />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_2fr] gap-8 lg:gap-12 bg-white p-6 rounded-lg shadow-md border border-slate-200">
             {/* Product Images */}
             <div className="lg:order-1 flex flex-col items-center">

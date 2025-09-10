@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { Header } from "../../components/layout/header"
+
 import { Footer } from "../../components/layout/footer"
 import { CartSidebar } from "../../components/cart/cart-sidebar"
 import { ProductGrid } from "../../components/products/product-grid"
@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "../../lib/hooks"
 import { setProducts } from "../../lib/features/products/productsSlice"
 import { mockProducts } from "../../lib/data/products"
 import { Percent, Clock, File as Fire } from "lucide-react"
+import Header from "@/src/components/layout/header"
 
 export default function OffersPage() {
   const dispatch = useAppDispatch()
