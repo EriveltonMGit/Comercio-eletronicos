@@ -16,7 +16,7 @@ import { imagens } from "../types/imagens";
 import CarrosselMercadoLivre from "../components/imageCarousel/carousel";
 import Header from "../components/layout/header";
 import { ProductGridSkeleton } from "../components/ui/skeleton";
-
+import { PromoCards } from "../components/PromoCards/PromoCards";
 
 export default function HomePage() {
   const dispatch = useAppDispatch();
@@ -45,23 +45,32 @@ export default function HomePage() {
     }
   }, [dispatch, products.length]);
 
-  const featuredProducts = products.filter((p) => p.category === "smartphones" || p.category === "laptops").slice(0, 4);
-  const discountedProducts = products.filter((p) => p.originalPrice && p.originalPrice > p.price);
+  const featuredProducts = products
+    .filter((p) => p.category === "smartphones" || p.category === "laptops")
+    .slice(0, 4);
+
+  const discountedProducts = products.filter(
+    (p) => p.originalPrice && p.originalPrice > p.price
+  );
 
   return (
     <div className="min-h-screen bg-[#f3f4f6]">
       <Header />
-      <CarrosselMercadoLivre imagens={imagens}></CarrosselMercadoLivre>
+      <CarrosselMercadoLivre imagens={imagens} />
       <CartSidebar />
 
       <main>
         {/* Destaques */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
+        <section className="py-12 sm:py-16">
+          <PromoCards />
+          <div className="container mx-auto px-2 sm:px-4 lg:px-8 mt-12 sm:mt-16 lg:mt-32 bg-white py-8 rounded-lg shadow">
             {isLoading ? (
               <ProductGridSkeleton count={4} />
             ) : (
-              <ProductGrid products={featuredProducts} title="Eletrônicos em Destaque" />
+              <ProductGrid
+                products={featuredProducts}
+                title="Eletrônicos em Destaque"
+              />
             )}
             <div className="text-center mt-8">
               <Button variant="outline" size="lg" asChild>
@@ -76,21 +85,25 @@ export default function HomePage() {
 
         {/* Ofertas */}
         {isLoading ? (
-          <div className="py-16 bg-gradient-to-r from-slate-50 to-emerald-50">
-            <div className="container mx-auto px-4">
+          <div className="py-12 sm:py-16 bg-gradient-to-r from-slate-50 to-emerald-50">
+            <div className="container mx-auto px-2 sm:px-4 lg:px-8">
               <ProductGridSkeleton count={4} />
             </div>
           </div>
         ) : (
           discountedProducts.length > 0 && (
-            <section className="py-16 bg-gradient-to-r from-slate-50 to-emerald-50">
-              <div className="container mx-auto px-4">
-                <ProductGrid products={discountedProducts} title="Ofertas Especiais" />
+            <section className="py-12 sm:py-16 bg-gradient-to-r from-slate-50 to-emerald-50">
+              <div className="container mx-auto px-2 sm:px-4 lg:px-8">
+                <ProductGrid
+                  products={discountedProducts}
+                  title="Ofertas Especiais"
+                />
               </div>
             </section>
           )
         )}
       </main>
+
       <Footer />
     </div>
   );

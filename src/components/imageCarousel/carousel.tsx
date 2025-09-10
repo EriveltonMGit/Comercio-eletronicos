@@ -63,20 +63,20 @@ const CarrosselMercadoLivre: React.FC<CarrosselProps> = ({ imagens }) => {
 
         {/* Indicadores de bolinhas */}
         <div className="absolute left-0 right-0 flex justify-center gap-2
-                bottom-12 sm:bottom-10 md:bottom-8 lg:bottom-6 xl:bottom-4 mb-16 z-10">
+                bottom-12 sm:bottom-10 md:bottom-8 lg:bottom-6 xl:bottom-4 mb-32 z-10">
           {imagens.map((_, index) => (
             <button
               key={index}
               onClick={() => irParaImagem(index)}
               aria-label={`Ir para imagem ${index + 1}`}
-              className={`w-2 h-2 rounded-full cursor-pointer transition-colors duration-300 ${index === indiceAtual ? "bg-green-600" : "bg-white/50 hover:bg-white/70"
+              className={`w-2 h-2 rounded-full cursor-pointer transition-colors duration-300 ${index === indiceAtual ? "bg-blue-700" : "bg-white/50 hover:bg-white/70"
                 }`}
             />
           ))}
         </div>
 
 
-        <div className="cloud-gradient-top w-full h-[20vh]  absolute bottom-0 z-10"></div>
+        <div className="cloud-gradient-top w-full h-[20vh]  absolute bottom-0 z-1"></div>
       </div>
     </>
   );
