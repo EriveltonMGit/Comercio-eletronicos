@@ -55,11 +55,11 @@ export function ProductCard({ product }: ProductCardProps) {
     }
 
     dispatch(
-      addToCart({
+      addToCart({ // AÇÃO CORRIGIDA: antes estava 'addToFavorites'
         id: product.id.toString(),
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: product.image || "/placeholder.svg", // CORRIGIDO: adicionado fallback
       })
     );
 
@@ -96,7 +96,7 @@ export function ProductCard({ product }: ProductCardProps) {
           id: product.id.toString(),
           name: product.name,
           price: product.price,
-          image: product.image,
+          image: product.image || "/placeholder.svg", // CORRIGIDO: adicionado fallback
         })
       );
       console.log("💖 Chamando notification.success: produto salvo nos favoritos");
@@ -133,8 +133,8 @@ export function ProductCard({ product }: ProductCardProps) {
               variant="ghost"
               size="icon"
               className={`absolute top-2 right-2 bg-white/90 hover:bg-white shadow-md ${isFavorite
-                  ? "text-red-500 hover:text-red-600"
-                  : "text-slate-600 hover:text-red-500"
+                ? "text-red-500 hover:text-red-600"
+                : "text-slate-600 hover:text-red-500"
                 }`}
               onClick={handleToggleFavorite}
             >

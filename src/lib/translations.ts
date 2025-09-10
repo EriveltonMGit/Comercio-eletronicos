@@ -80,7 +80,7 @@ export const translations: Record<string, string> = {
   "Bedside Table African Cherry": "Mesa de Cabeceira em Cerejeira Africana",
   "Knoll Saarinen Executive Conference Chair": "Cadeira de Escritório Knoll Saarinen",
   "Wooden Bathroom Sink With Mirror": "Pia de Banheiro de Madeira com Espelho",
-  "Apple": "Maçã",
+  "Apple": "Apple",
   "Beef Steak": "Bife de Carne",
   "Cat Food": "Ração para Gato",
   "Chicken Meat": "Carne de Frango",

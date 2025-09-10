@@ -29,7 +29,8 @@ export const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
                 {item.label}
               </Link>
             ) : (
-              <span className="ml-2 text-slate-900 truncate max-w-[200px] sm:max-w-none">
+              // Classes `truncate` e `max-w` para a responsividade
+              <span className="ml-2 text-slate-900 truncate  max-w-[100px] sm:max-w-[200px] md:max-w-none">
                 {item.label}
               </span>
             )}

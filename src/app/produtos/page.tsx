@@ -1,3 +1,4 @@
+// src/app/produtos/page.tsx
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -18,6 +19,7 @@ import { message } from "antd";
 import { translations } from "@/src/lib/translations";
 import { ProductGridSkeleton } from "@/src/components/ui/skeleton";
 import { Breadcrumbs } from "@/src/components/layout/breadcrumbs";
+import Image from "next/image"; // Importar o componente Image
 
 interface ProductsByCategory {
   [key: string]: ProductDetails[];
@@ -39,8 +41,7 @@ export default function ProductsPage() {
           const allProds = await getAllProductsData();
           dispatch(setProducts(allProds));
         }
-        
-        // Aplica o filtro da URL após os dados serem carregados.
+
         const categoryFromUrl = searchParams.get("category");
         dispatch(setFilters({ category: categoryFromUrl || "" }));
       } catch (e) {
@@ -116,7 +117,7 @@ export default function ProductsPage() {
                     value={filters.category || "all"}
                     onValueChange={(value) => handleFilterChange("category", value === "all" ? "" : value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full h-8"> {/* Ajustado para h-8 */}
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -136,7 +137,7 @@ export default function ProductsPage() {
                     value={filters.brand || "all"}
                     onValueChange={(value) => handleFilterChange("brand", value === "all" ? "" : value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full h-8"> {/* Ajustado para h-8 */}
                       <SelectValue placeholder="Selecione uma marca" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -170,9 +171,10 @@ export default function ProductsPage() {
                   <Button
                     onClick={handleClearFilters}
                     variant="outline"
+                    size="sm" // Ajustado para 'sm'
                     className="w-full border-red-300 text-red-600 hover:bg-red-50"
                   >
-                    <X className="w-4 h-4 mr-2" />
+                    <X className="w-3 h-3 mr-1" /> {/* Ícone menor */}
                     Limpar Filtros
                   </Button>
                 </div>
@@ -186,9 +188,12 @@ export default function ProductsPage() {
               Object.keys(groupedProducts).length > 0 ? (
                 <>
                   <div className="mb-6 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                    <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                      {searchQuery ? `Resultados para "${searchQuery}"` : "Todos os Produtos"}
-                    </h1>
+                    <div className="flex items-center gap-2 mb-2"> {/* `gap-2` para diminuir o espaço */}
+                      <h1 className="text-2xl font-bold text-slate-900">
+                        {searchQuery ? `Resultados para "${searchQuery}"` : "Todos os Produtos"}
+                      </h1>
+                      <img src="/icons/pedidos.gif" alt="Ícone de Documentos" width={28} height={28} className="w-7 h-7" /> {/* Reduzido o tamanho */}
+                    </div>
                     <p className="text-slate-600">
                       {filteredItems.length} produto{filteredItems.length !== 1 ? "s" : ""} encontrado{filteredItems.length !== 1 ? "s" : ""}
                     </p>
@@ -214,7 +219,7 @@ export default function ProductsPage() {
               ) : (
                 <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-slate-200">
                   <p className="text-slate-600 mb-4">Nenhum produto encontrado com os filtros aplicados.</p>
-                  <Button onClick={handleClearFilters} variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100">
+                  <Button onClick={handleClearFilters} variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100">
                     Limpar Filtros
                   </Button>
                 </div>

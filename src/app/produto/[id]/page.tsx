@@ -1,22 +1,23 @@
 // src/app/produto/[id]/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 
 import { CartSidebar } from "../../../components/cart/cart-sidebar";
 import { Button } from "../../../components/ui/button";
 import { Badge } from "../../../components/ui/badge";
-import { Card, CardContent } from "../../../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../../components/ui/card";
 import { Separator } from "../../../components/ui/separator";
 import { useAppDispatch, useAppSelector } from "../../../lib/hooks";
 import { addToCart } from "../../../lib/features/cart/cartSlice";
 import { addToFavorites, removeFromFavorites } from "../../../lib/features/favorites/favoritesSlice";
-import { ProductGrid } from "../../../components/products/product-grid";
-import { Heart, ShoppingCart, Star, Truck, Shield, RotateCcw, Minus, Plus } from "lucide-react";
+import { ProductCard } from "../../../components/products/product-card";
+import { Heart, ShoppingCart, Star, Truck, Shield, RotateCcw, Minus, Plus, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import Header from "@/src/components/layout/header";
 import { Breadcrumbs } from "@/src/components/layout/breadcrumbs";
+import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
 
 import {
   getProductById,
@@ -26,7 +27,7 @@ import {
 } from "@/src/services/cardService";
 
 import { translations } from "@/src/lib/translations";
-import { message } from "antd";
+import { notification } from "antd";
 import { ProductPageSkeleton } from "@/src/components/skeletons/product-page-skeleton";
 
 export default function ProductPage() {
@@ -42,6 +43,11 @@ export default function ProductPage() {
 
   const favorites = useAppSelector((state) => state.favorites.items);
   const isFavorite = favorites.some((item) => item.id.toString() === params.id);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Adiciona a ref para a rolagem do carrossel
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -84,12 +90,15 @@ export default function ProductPage() {
 
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   const discountPercentage = hasDiscount
-    ? Math.round(((product.originalPrice! - product.price) / product.price) * 100)
+    ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
     : 0;
 
   const handleAddToCart = () => {
     if (product.stock <= 0) {
-      message.error("Este produto está fora de estoque.");
+      notification.error({
+        message: 'Produto Indisponível',
+        description: 'Este produto está fora de estoque no momento.',
+      });
       return;
     }
     for (let i = 0; i < quantity; i++) {
@@ -102,13 +111,28 @@ export default function ProductPage() {
         })
       );
     }
-    message.success(`${translations[product.name] || product.name} foi adicionado ao carrinho!`);
+    notification.success({
+      message: 'Adicionado ao Carrinho!',
+      description: `${translations[product.name] || product.name} foi adicionado ao seu carrinho.`,
+      placement: 'topRight',
+      icon: <CheckCircle className="text-emerald-500" />,
+      style: {
+        width: 350,
+        top: 24,
+      }
+    });
+
+    setIsModalOpen(true);
   };
 
   const handleToggleFavorite = () => {
     if (isFavorite) {
       dispatch(removeFromFavorites(product.id.toString()));
-      message.success(`${translations[product.name] || product.name} foi removido dos seus favoritos.`);
+      notification.success({
+        message: 'Removido dos Favoritos',
+        description: `${translations[product.name] || product.name} foi removido dos seus favoritos.`,
+        placement: 'topRight'
+      });
     } else {
       dispatch(
         addToFavorites({
@@ -118,18 +142,33 @@ export default function ProductPage() {
           image: product.image,
         })
       );
-      message.success(`${translations[product.name] || product.name} foi salvo nos seus favoritos!`);
+      notification.success({
+        message: 'Salvo nos Favoritos!',
+        description: `${translations[product.name] || product.name} foi salvo nos seus favoritos!`,
+        placement: 'topRight'
+      });
     }
   };
 
   const images = product.images || [product.image];
 
-  // Construção dinâmica dos itens do breadcrumb
   const breadcrumbItems = [
     { label: "Produtos", href: "/produtos" },
     { label: translations[product.category] || product.category, href: `/produtos?category=${product.category}` },
     { label: translations[product.name] || product.name },
   ];
+
+  // Função de rolagem para o carrossel de produtos relacionados
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = 300;
+      if (direction === 'left') {
+        carouselRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else {
+        carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    }
+  };
 
   return (
     <>
@@ -138,31 +177,22 @@ export default function ProductPage() {
         <CartSidebar />
 
         <main className="container mx-auto px-4 py-8 lg:py-16">
-          {/* Adicione o Breadcrumbs aqui, acima do container principal do produto */}
           <div className="mb-6">
             <Breadcrumbs items={breadcrumbItems} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_2fr] gap-8 lg:gap-12 bg-white p-6 rounded-lg shadow-md border border-slate-200">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8 lg:gap-12 bg-white p-6 rounded-lg shadow-md border border-slate-200">
             {/* Product Images */}
-            <div className="lg:order-1 flex flex-col items-center">
-              <div className="w-full max-w-lg aspect-square overflow-hidden rounded-lg bg-muted border border-slate-200">
-                <Image
-                  src={images[selectedImage] || "/placeholder.svg"}
-                  alt={product.name}
-                  width={800}
-                  height={800}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-
+            <div className="lg:order-1 flex flex-col lg:flex-row items-start gap-4">
               {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto mt-4 w-full justify-center">
+                <div className="flex gap-2 w-full lg:w-20 lg:flex-col overflow-x-auto lg:overflow-y-auto justify-center lg:justify-start flex-shrink-0">
                   {images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
                       className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${selectedImage === index ? "border-blue-500" : "border-transparent hover:border-blue-300"}`}
+                      aria-label={`Ver miniatura ${index + 1}`}
+                      type="button"
                     >
                       <Image
                         src={image || "/placeholder.svg"}
@@ -175,16 +205,38 @@ export default function ProductPage() {
                   ))}
                 </div>
               )}
+
+              <div className="w-full max-w-lg flex-1 aspect-square overflow-hidden rounded-lg bg-muted border border-slate-200 flex items-center justify-center">
+                <Image
+                  src={images[selectedImage] || "/placeholder.svg"}
+                  alt={product.name}
+                  width={800}
+                  height={800}
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
 
             {/* Product Info */}
-            <div className="space-y-6 lg:order-2">
-              <div>
-                <Badge variant="secondary" className="mb-2">
-                  {translations[product.category] || product.category}
-                </Badge>
-                <h1 className="text-3xl font-bold text-slate-900 text-balance">{translations[product.name] || product.name}</h1>
-                <p className="text-slate-600 mt-2 text-lg">{translations[product.brand] || product.brand}</p>
+            <div className="space-y-4 lg:order-2">
+              <div className="flex items-start justify-between">
+                <div>
+                  <Badge variant="secondary" className="mb-2">
+                    {translations[product.category] || product.category}
+                  </Badge>
+                  <h1 className="text-3xl font-bold text-slate-900 text-balance">{translations[product.name] || product.name}</h1>
+                  <p className="text-slate-600 mt-2 text-lg">{translations[product.brand] || product.brand}</p>
+                </div>
+                {/* O novo botão de favoritos */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleFavorite}
+                  className={`flex-shrink-0 ml-4 p-2 w-14 h-14 border ${isFavorite ? "text-red-500 hover:text-red-600 bg-white" : "text-slate-600 hover:text-red-500 bg-white"}`}
+                  aria-label={isFavorite ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                >
+                  <Heart className={`w-6 h-6 ${isFavorite ? "fill-red-500" : ""}`} />
+                </Button>
               </div>
 
               {/* Rating */}
@@ -219,11 +271,12 @@ export default function ProductPage() {
                   em 12x de R$ {(product.price / 12).toFixed(2)} sem juros
                 </p>
               </div>
+
               <Separator />
 
               {/* Quantity */}
-              <div>
-                <h3 className="font-semibold text-slate-800 mb-3">Quantidade:</h3>
+              <div className="bg-white rounded-lg">
+                <h3 className="font-semibold text-slate-800 mb-2">Quantidade:</h3>
                 <div className="flex items-center gap-3">
                   <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="border-slate-300 text-slate-700 hover:bg-slate-100">
                     <Minus className="w-4 h-4" />
@@ -239,19 +292,11 @@ export default function ProductPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold text-lg py-6"
+                  className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold text-lg py-2 mt-1"
                   disabled={product.stock <= 0}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   {product.stock > 0 ? "Adicionar ao Carrinho" : "Fora de Estoque"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleToggleFavorite}
-                  className={`flex-1 text-blue-600 border-blue-600 font-bold text-lg py-6 ${isFavorite ? "bg-blue-100 hover:bg-blue-200" : "bg-white hover:bg-blue-50"}`}
-                >
-                  <Heart className={`w-5 h-5 mr-2 ${isFavorite ? "fill-blue-600" : ""}`} />
-                  {isFavorite ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                 </Button>
               </div>
 
@@ -278,7 +323,7 @@ export default function ProductPage() {
 
           {/* Product Details */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <Card className="shadow-md border-slate-200">
+            <Card className="shadow-md border-slate-200 bg-white">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-slate-900 mb-4">Descrição</h2>
                 <p className="text-slate-600 text-pretty leading-relaxed">
@@ -288,7 +333,7 @@ export default function ProductPage() {
             </Card>
 
             {product.specifications && product.specifications.length > 0 && (
-              <Card className="shadow-md border-slate-200">
+              <Card className="shadow-md border-slate-200 bg-white">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-bold text-slate-900 mb-4">Especificações</h2>
                   <ul className="space-y-2">
@@ -306,14 +351,49 @@ export default function ProductPage() {
             )}
           </div>
 
-          {/* Related Products */}
+          <Separator className="my-12" />
+
+          {/* Related Products Section - Carrossel */}
           {relatedProducts.length > 0 && (
-            <section className="mt-16">
-              <ProductGrid products={relatedProducts} title="Produtos Relacionados" />
+            <section className="mt-8 relative">
+              <Card className="bg-white rounded-lg shadow-md py-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-2xl text-slate-900 mb-4">
+                    Produtos Relacionados
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="icon" onClick={() => handleScroll('left')}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => handleScroll('right')}>
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardTitle>
+                  <CardDescription className="text-sm text-gray-500 hidden md:block">
+                    Confira outros produtos que você pode gostar, com base na categoria deste item.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div ref={carouselRef} className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-p-4 md:scroll-p-8">
+                    {relatedProducts.map(relatedProduct => (
+                      <div key={relatedProduct.id} className="flex-none w-64 snap-center">
+                        <ProductCard product={relatedProduct} />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </section>
           )}
         </main>
       </div>
+      {/* Adicionar o modal aqui para que ele possa ser exibido */}
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        type="cart"
+        productName={product.name}
+      />
     </>
   );
 }
